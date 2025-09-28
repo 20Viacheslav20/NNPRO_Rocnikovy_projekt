@@ -1,0 +1,13 @@
+package com.npro;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class NproApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(NproApplication.class, args);
+    }
+
+}
