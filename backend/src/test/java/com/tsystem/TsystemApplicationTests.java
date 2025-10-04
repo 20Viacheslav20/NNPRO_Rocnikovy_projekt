@@ -1,10 +1,10 @@
-package com.npro;
+package com.tsystem;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class NproApplicationTests {
+class TsystemApplicationTests {
 
     @Test
     void contextLoads() {
