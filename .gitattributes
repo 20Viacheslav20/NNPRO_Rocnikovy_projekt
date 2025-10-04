@@ -1,0 +1,9 @@
+# Maven wrapper scripts
+/backend/mvnw text eol=lf
+/backend/mvnw.cmd text eol=crlf
+
+# Optional: shell scripts in frontend or elsewhere
+/**/*.sh text eol=lf
+
+# All text files: normalize endings
+* text=auto
