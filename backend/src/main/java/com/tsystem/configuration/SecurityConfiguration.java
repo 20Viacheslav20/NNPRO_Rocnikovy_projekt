@@ -35,20 +35,20 @@ public class SecurityConfiguration  {
             "/api/auth/reset-password"};
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         http
-                .csrf()
-                .disable()
+                .csrf().disable()
+                .cors()
+                .and()
                 .authorizeRequests()
-                .requestMatchers(WHITE_LIST_URL)
-                .permitAll()
-
+                .requestMatchers(WHITE_LIST_URL).permitAll()
+                .anyRequest().authenticated()
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 

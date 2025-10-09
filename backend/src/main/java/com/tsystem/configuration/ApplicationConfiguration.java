@@ -9,6 +9,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,13 +26,13 @@ public class ApplicationConfiguration {
     @Bean
     public UserDetailsService userDetailsService() {
         return usernameOrEmail -> userRepository.findByUsername(usernameOrEmail)
-                .<UserDetails>map(u -> org.springframework.security.core.userdetails.User
+                .<UserDetails>map(u -> User
                         .withUsername(u.getUsername())
                         .password(u.getPassword())
                         .authorities("USER")
                         .accountLocked(false).disabled(false).build())
                 .orElseGet(() -> userRepository.findByEmail(usernameOrEmail)
-                        .<UserDetails>map(u -> org.springframework.security.core.userdetails.User
+                        .<UserDetails>map(u -> User
                                 .withUsername(u.getUsername())
                                 .password(u.getPassword())
                                 .authorities("USER")

@@ -1,0 +1,10 @@
+<div class="auth-container">
+  <h2>Register</h2>
+  <form (ngSubmit)="onRegister()">
+    <input [(ngModel)]="email" name="email" placeholder="Email" required />
+    <input [(ngModel)]="password" name="password" type="password" placeholder="Password" required />
+    <button type="submit">Register Account</button>
+  </form>
+  <p>Already have an account? <a routerLink="/login">Login</a></p>
+  <p *ngIf="error" class="error">{{ error }}</p>
+</div>
