@@ -13,8 +13,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table(name = "projects", schema = "app",
-        indexes = { @Index(name = "idx_projects_owner", columnList = "owner_id") })
+@Table(name = "projects")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Project {

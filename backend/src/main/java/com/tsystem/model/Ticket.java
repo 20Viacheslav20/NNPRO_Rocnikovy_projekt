@@ -12,11 +12,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "tickets", schema = "app",
-        indexes = {
-                @Index(name = "idx_tickets_project", columnList = "project_id"),
-                @Index(name = "idx_tickets_author",  columnList = "author_id")
-        })
+@Table(name = "tickets")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Ticket {

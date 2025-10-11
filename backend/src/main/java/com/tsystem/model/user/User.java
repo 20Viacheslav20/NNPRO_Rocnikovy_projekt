@@ -10,12 +10,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users", schema = "app",
-        indexes = {
-                @Index(name = "ux_users_username", columnList = "username", unique = true),
-                @Index(name = "ux_users_email",    columnList = "email",    unique = true),
-                @Index(name = "idx_users_reset_token", columnList = "reset_token_id")
-        })
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -44,7 +39,6 @@ public class User implements UserDetails {
     @Column(name = "password_hash", nullable = false, columnDefinition = "TEXT")
     private String password;
 
-    // for password reset
     @Column(name = "reset_code", length = 64)
     private String resetCode;
 
@@ -55,8 +49,7 @@ public class User implements UserDetails {
     private UUID resetTokenId;
 
     @Column(name = "password_changed_at")
-    private OffsetDateTime passwordChangedAt; // когда пароль менялся в последний раз
-
+    private OffsetDateTime passwordChangedAt;
 
     @Column(name = "created_at", nullable = false)
     @Builder.Default
