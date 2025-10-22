@@ -25,7 +25,7 @@ public class Ticket {
     @NotBlank
     @Size(min = 1, max = 160)
     @Column(nullable = false, length = 160)
-    private String name; // title в ТЗ
+    private String name;
 
     @Column(columnDefinition = "TEXT")
     @Size(max = 10000)

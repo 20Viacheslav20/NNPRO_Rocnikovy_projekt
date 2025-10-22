@@ -18,21 +18,16 @@ import java.util.UUID;
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class User implements UserDetails {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
     private UUID id;
-
     @Column(nullable = false, length = 60, unique = true)
     private String username;
-
     @Column(nullable = false, length = 255, unique = true)
     private String email;
-
     @Column(nullable = false, length = 120)
     private String name;
-
     @Column(nullable = false, length = 120)
     private String surname;
 
