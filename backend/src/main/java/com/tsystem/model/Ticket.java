@@ -48,6 +48,10 @@ public class Ticket {
     @JoinColumn(name = "author_id", nullable = false)
     private User user; // автор
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee_id")
+    private User assignee;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
