@@ -38,8 +38,9 @@ public class Project {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "owner_id", nullable = false)
-    private User user;
+    private User user; // владелец
 
+    // связь в обратную сторону, чтобы при удалении проекта удалялись тикеты
     @OneToMany(mappedBy = "project", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @Builder.Default
     private Set<Ticket> tickets = new LinkedHashSet<>();

@@ -25,7 +25,7 @@ public class Ticket {
     @NotBlank
     @Size(min = 1, max = 160)
     @Column(nullable = false, length = 160)
-    private String name;
+    private String name; // title
 
     @Column(columnDefinition = "TEXT")
     @Size(max = 10000)
@@ -46,7 +46,11 @@ public class Ticket {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "author_id", nullable = false)
-    private User user; // автор
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee_id")
+    private User assignee;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "project_id", nullable = false)
@@ -56,8 +60,5 @@ public class Ticket {
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
-    @PrePersist
-    void prePersist() {
-        if (createdAt == null) createdAt = OffsetDateTime.now();
-    }
+
 }
