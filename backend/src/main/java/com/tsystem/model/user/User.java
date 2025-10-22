@@ -55,11 +55,6 @@ public class User implements UserDetails {
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
-    @PrePersist
-    void prePersist() {
-        if (createdAt == null) createdAt = OffsetDateTime.now();
-    }
-
     @Enumerated(EnumType.STRING)
     private SystemRole role;
     @Override
