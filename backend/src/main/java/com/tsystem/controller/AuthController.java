@@ -33,11 +33,13 @@ public class AuthController {
     ) {
         return ResponseEntity.ok(authService.authenticate(loginRequest));
     }
+
     @PostMapping("/request-password-reset")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void requestReset(@RequestBody RequestPasswordReset req) {
         authService.requestPasswordReset(req);
     }
+
     @PostMapping("/reset-password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void resetPassword(@RequestBody ResetPassword req) {
