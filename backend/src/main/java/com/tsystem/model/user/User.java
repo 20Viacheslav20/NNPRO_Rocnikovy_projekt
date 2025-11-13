@@ -18,21 +18,16 @@ import java.util.UUID;
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class User implements UserDetails {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
     private UUID id;
-
     @Column(nullable = false, length = 60, unique = true)
     private String username;
-
     @Column(nullable = false, length = 255, unique = true)
     private String email;
-
     @Column(nullable = false, length = 120)
     private String name;
-
     @Column(nullable = false, length = 120)
     private String surname;
 
@@ -54,11 +49,6 @@ public class User implements UserDetails {
     @Column(name = "created_at", nullable = false)
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();
-
-    @PrePersist
-    void prePersist() {
-        if (createdAt == null) createdAt = OffsetDateTime.now();
-    }
 
     @Enumerated(EnumType.STRING)
     private SystemRole role;
