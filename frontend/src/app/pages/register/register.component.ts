@@ -20,12 +20,9 @@ export class RegisterComponent {
   constructor(private auth: AuthService, private router: Router) {}
 
   onRegister() {
-    this.auth.register(this.email, this.password).subscribe(success => {
-      if (success) {
-        this.router.navigateByUrl('/login');
-      } else {
-        this.error = 'Registration error';
-      }
+    this.auth.register(this.email, this.password).subscribe({
+      next: () => this.router.navigateByUrl('/login'),
+      error: err => this.error = err
     });
   }
 }

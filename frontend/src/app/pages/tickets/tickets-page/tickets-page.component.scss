@@ -1,0 +1,48 @@
+
+.full-width { width: 100%; }
+.center { text-align: center; }
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 12px 20px;
+  gap: 20px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 3px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+/* TYPES */
+.chip--bug { background: #d32f2f; }
+.chip--feature { background: #1976d2; }
+.chip--task { background: #7b1fa2; }
+
+/* PRIORITIES */
+.chip--low { background: #388e3c; }
+.chip--medium { background: #ffa000; }
+.chip--high { background: #d32f2f; }
+
+/* STATES */
+.chip--open { background: #0288d1; }
+.chip--progress { background: #f57c00; }
+.chip--done { background: #2e7d32; }

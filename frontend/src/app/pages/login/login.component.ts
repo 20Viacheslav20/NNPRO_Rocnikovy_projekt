@@ -20,12 +20,9 @@ export class LoginComponent {
   constructor(private auth: AuthService, private router: Router) {}
 
   onLogin() {
-    this.auth.login(this.email, this.password).subscribe(success => {
-      if (success) {
-        this.router.navigateByUrl('/home');
-      } else {
-        this.error = 'Incorrect login or password';
-      }
+    this.auth.login(this.email, this.password).subscribe({
+      next: () => this.router.navigateByUrl('/home'),
+      error: err => this.error = err
     });
   }
 }
