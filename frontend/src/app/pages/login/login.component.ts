@@ -1,28 +1,55 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { RouterModule } from '@angular/router';
+
+// Angular Material
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule
+  ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
-  email = '';
-  password = '';
+  form: FormGroup;
+  loading = false;
   error = '';
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private fb: FormBuilder, private auth: AuthService, private router: Router) {
+    // Поле называем "email", сервис сам превращает его в {login: email, password}
+    this.form = this.fb.group({
+      email: ['', Validators.required],
+      password: ['', Validators.required],
+    });
+  }
 
-  onLogin() {
-    this.auth.login(this.email, this.password).subscribe({
+  submit(): void {
+    if (this.form.invalid || this.loading) return;
+    this.loading = true;
+    this.error = '';
+
+    const { email, password } = this.form.value as { email: string; password: string };
+    this.auth.login(email, password).subscribe({
       next: () => this.router.navigateByUrl('/home'),
-      error: err => this.error = err
+      error: () => {
+        this.loading = false;
+        this.error = 'Login failed';
+      }
     });
   }
 }

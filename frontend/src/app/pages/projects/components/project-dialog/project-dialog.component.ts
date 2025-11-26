@@ -1,93 +1,96 @@
-import { Component, Inject, OnInit, inject } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { FormBuilder, ReactiveFormsModule, Validators, FormGroup } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogActions, MatDialogContent, MatDialogTitle, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-
+import { MatOptionModule } from '@angular/material/core';
 import { ProjectService } from '../../../../core/services/project.service';
 import { Project } from '../../models/project.model';
-import { ProjectRequest } from '../../models/project-request.model';
+import { ProjectCreateRequest, ProjectUpdateRequest } from '../../models/project-request.model';
 import { ProjectStatus } from '../../models/project-status.enum';
 
-type DialogMode = 'create' | 'edit';
-
-interface DialogData {
-    mode: DialogMode;
-    project?: Project;
+export interface ProjectDialogData {
+  mode: 'create' | 'edit';
+  project?: Project;
 }
 
 @Component({
-    selector: 'app-project-dialog',
-    standalone: true,
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        MatDialogModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatSelectModule,
-        MatButtonModule,
-        MatSnackBarModule
-    ],
-    templateUrl: './project-dialog.component.html',
-    styleUrls: ['./project-dialog.component.scss']
+  selector: 'app-project-dialog',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatDialogTitle, MatDialogContent, MatDialogActions,
+    MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatButtonModule,
+  ],
+  templateUrl: './project-dialog.component.html',
+  styleUrls: ['./project-dialog.component.scss'],
 })
-export class ProjectDialogComponent implements OnInit {
-    private readonly fb = inject(FormBuilder);
-    private readonly service = inject(ProjectService);
-    private readonly snack = inject(MatSnackBar);
+export class ProjectDialogComponent {
+  readonly statuses: ProjectStatus[] = [ProjectStatus.ACTIVE, ProjectStatus.ARCHIVED];
+  isEdit = false;
 
-    form!: FormGroup;
-    ProjectStatus = ProjectStatus;
+  // ВАЖНО: инициализируем форму в конструкторе, а не в поле класса
+  form!: FormGroup;
 
-    constructor(
-        @Inject(MAT_DIALOG_DATA) public data: DialogData,
-        private dialogRef: MatDialogRef<ProjectDialogComponent>
-    ) { }
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly ref: MatDialogRef<ProjectDialogComponent>,
+    private readonly service: ProjectService,
+    @Inject(MAT_DIALOG_DATA) public data: ProjectDialogData
+  ) {
+    this.isEdit = data.mode === 'edit';
 
-    ngOnInit(): void {
-        this.form = this.fb.group({
-            name: [
-                this.data.project?.name ?? '',
-                [Validators.required, Validators.minLength(1), Validators.maxLength(120)]
-            ],
-            description: [
-                this.data.project?.description ?? ''
-            ],
-            status: [
-                this.data.project?.status ?? ProjectStatus.ACTIVE,
-                [Validators.required]
-            ]
-        });
+    this.form = this.fb.group({
+      name: ['', [Validators.required, Validators.maxLength(255)]],
+      description: [''],
+      // status добавим ниже, только для edit
+    });
+
+    if (this.isEdit && data.project) {
+      this.form.patchValue({
+        name: data.project.name,
+        description: data.project.description ?? '',
+      });
+      this.form.addControl(
+        'status',
+        this.fb.control<ProjectStatus>(data.project.status, { nonNullable: true, validators: [Validators.required] })
+      );
+    }
+  }
+
+  submit(): void {
+    if (this.form.invalid) return;
+
+    if (this.isEdit && this.data.project) {
+      const val = this.form.value as any;
+      const body: ProjectUpdateRequest = {
+        name: (val.name ?? '').trim(),
+        description: (val.description ?? '') || null,
+        status: val.status as ProjectStatus,
+      };
+      this.service.update(this.data.project.id, body).subscribe({
+        next: () => this.ref.close(true),
+        error: () => this.ref.close(false),
+      });
+      return;
     }
 
-    saving = false;
+    const val = this.form.value as any;
+    const body: ProjectCreateRequest = {
+      name: (val.name ?? '').trim(),
+      description: (val.description ?? '') || null,
+    };
+    this.service.create(body).subscribe({
+      next: () => this.ref.close(true),
+      error: () => this.ref.close(false),
+    });
+  }
 
-    save(): void {
-        if (this.form.invalid) return;
-        const value = this.form.value as ProjectRequest;
-        this.saving = true;
-
-        if (this.data.mode === 'create') {
-            this.service.create(value).subscribe({
-                next: (created) => { this.saving = false; this.dialogRef.close(created); },
-                error: (err) => { this.saving = false; this.snack.open(err, 'Close', { duration: 3000 }); }
-            });
-        } else {
-            const id = this.data.project!.id;
-            this.service.update(id, value).subscribe({
-                next: (updated) => { this.saving = false; this.dialogRef.close(updated); },
-                error: (err) => { this.saving = false; this.snack.open(err, 'Close', { duration: 3000 }); }
-            });
-        }
-    }
-
-    cancel(): void {
-        this.dialogRef.close();
-    }
-
+  cancel(): void {
+    this.ref.close();
+  }
 }

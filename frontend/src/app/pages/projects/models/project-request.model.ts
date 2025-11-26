@@ -1,7 +1,13 @@
 import { ProjectStatus } from './project-status.enum';
 
-export interface ProjectRequest {
-    name: string;
-    description?: string | null;
-    status?: ProjectStatus;
+export interface ProjectCreateRequest {
+  name: string;
+  description?: string | null;
 }
+export interface ProjectUpdateRequest {
+  name: string;
+  description?: string | null;
+  status: ProjectStatus;    // necessary by backend
+}
+
+

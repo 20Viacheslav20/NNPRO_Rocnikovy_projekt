@@ -19,9 +19,10 @@ export class RegisterComponent {
   password = '';
   error = '';
 
-  constructor(private auth: AuthService, private router: Router) { }
+  constructor(private auth: AuthService, private router: Router) {}
 
   onRegister() {
+    this.error = '';
     const request = {
       username: this.username,
       name: this.name,
@@ -32,9 +33,9 @@ export class RegisterComponent {
 
     this.auth.register(request).subscribe({
       next: () => this.router.navigateByUrl('/login'),
-      error: err => {
+      error: (err: any) => {
         console.error(err);
-        this.error = "Registration failed";
+        this.error = 'Registration failed';
       }
     });
   }

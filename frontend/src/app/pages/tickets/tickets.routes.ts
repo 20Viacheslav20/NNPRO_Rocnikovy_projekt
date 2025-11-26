@@ -5,4 +5,7 @@ import { TicketDetailComponent } from './ticket-detail/ticket-detail.component';
 export const TICKETS_ROUTES: Routes = [
     { path: 'projects/:projectId/tickets', component: TicketsPageComponent },
     { path: 'projects/:projectId/tickets/:ticketId', component: TicketDetailComponent },
+
+    // ADDED: "my" tickets (without projectId)
+    { path: 'tickets', component: TicketsPageComponent },
 ];

@@ -1,125 +1,151 @@
-<br/>
-<div class="toolbar">
-  <div class="actions">
-    <button mat-stroked-button (click)="create()">New ticket</button>
-    <button mat-stroked-button (click)="exportCsv()">Export CSV</button>
-    <button mat-stroked-button (click)="generate()">Generate</button>
-  </div>
+<div class="tickets-page container">
+  <h2>Tickets</h2>
 
-  <div class="filters">
-    <mat-form-field appearance="outline">
-      <mat-label>Search</mat-label>
-      <input matInput [(ngModel)]="search" placeholder="id or title">
-    </mat-form-field>
+  <mat-card class="mb-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Search</mat-label>
+          <input
+            matInput
+            [(ngModel)]="search"
+            (ngModelChange)="onSearchChange()"
+            placeholder="id or name"
+          />
+          <button *ngIf="search" matSuffix mat-icon-button aria-label="Clear" (click)="search='';onSearchChange()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-form-field>
+      </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Type</mat-label>
-      <mat-select [(ngModel)]="typeFilter">
-        <mat-option value="">All</mat-option>
-        <mat-option value="BUG">BUG</mat-option>
-        <mat-option value="FEATURE">FEATURE</mat-option>
-        <mat-option value="TASK">TASK</mat-option>
-      </mat-select>
-    </mat-form-field>
+      <div class="col-md-8 text-end">
+        <span *ngIf="projectId; else noProject" class="text-muted">
+          Project: <code>{{ projectId }}</code>
+        </span>
+        <ng-template #noProject>
+          <span class="text-danger">Project is not selected</span>
+        </ng-template>
+      </div>
+    </div>
+  </mat-card>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Priority</mat-label>
-      <mat-select [(ngModel)]="priorityFilter">
-        <mat-option value="">All</mat-option>
-        <mat-option value="LOW">LOW</mat-option>
-        <mat-option value="MEDIUM">MEDIUM</mat-option>
-        <mat-option value="HIGH">HIGH</mat-option>
-      </mat-select>
-    </mat-form-field>
+  <mat-card class="mb-4">
+    <h3 class="mb-3">Create ticket</h3>
+    <form (ngSubmit)="create()">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Name</mat-label>
+            <input matInput [(ngModel)]="formName" name="name" required />
+          </mat-form-field>
+        </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>State</mat-label>
-      <mat-select [(ngModel)]="stateFilter">
-        <mat-option value="">All</mat-option>
-        <mat-option value="OPEN">OPEN</mat-option>
-        <mat-option value="IN_PROGRESS">IN PROGRESS</mat-option>
-        <mat-option value="DONE">DONE</mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
+        <div class="col-md-3">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Type</mat-label>
+            <mat-select [(ngModel)]="formType" name="type">
+              <mat-option *ngFor="let t of types" [value]="t">{{ t }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="col-md-3">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Priority</mat-label>
+            <mat-select [(ngModel)]="formPriority" name="priority">
+              <mat-option *ngFor="let p of priorities" [value]="p">{{ p }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="col-md-12">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Description</mat-label>
+            <textarea matInput rows="2" [(ngModel)]="formDescription" name="description"></textarea>
+          </mat-form-field>
+        </div>
+
+        <div class="col-md-12 text-end">
+          <button mat-flat-button color="primary" type="submit" [disabled]="loading || !projectId">
+            <mat-icon>add</mat-icon>
+            Create
+          </button>
+        </div>
+      </div>
+    </form>
+  </mat-card>
+
+  <mat-card>
+    <div class="d-flex align-items-center gap-3 mb-2">
+      <mat-progress-spinner *ngIf="loading" mode="indeterminate" diameter="28"></mat-progress-spinner>
+      <span *ngIf="info" class="text-muted">{{ info }}</span>
+      <span *ngIf="error" class="text-danger">{{ error }}</span>
+    </div>
+
+    <div *ngIf="filtered.length; else empty">
+      <table mat-table [dataSource]="filtered" class="mat-elevation-z1 w-100" [trackBy]="trackById">
+        <!-- ID -->
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef>ID</th>
+          <td mat-cell *matCellDef="let row">
+            <a (click)="open(row)" class="text-decoration-none" style="cursor:pointer">{{ row.id }}</a>
+          </td>
+        </ng-container>
+
+        <!-- Name -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+        </ng-container>
+
+        <!-- Type -->
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>Type</th>
+          <td mat-cell *matCellDef="let row">{{ row.type }}</td>
+        </ng-container>
+
+        <!-- Priority -->
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef>Priority</th>
+          <td mat-cell *matCellDef="let row">{{ row.priority }}</td>
+        </ng-container>
+
+        <!-- State (убрали типовую аннотацию в шаблоне) -->
+        <ng-container matColumnDef="state">
+          <th mat-header-cell *matHeaderCellDef>State</th>
+          <td mat-cell *matCellDef="let row">
+            <mat-select [value]="row.state" (selectionChange)="setState(row, $event.value)">
+              <mat-option *ngFor="let s of states" [value]="s">{{ s }}</mat-option>
+            </mat-select>
+          </td>
+        </ng-container>
+
+        <!-- Created -->
+        <ng-container matColumnDef="createdAt">
+          <th mat-header-cell *matHeaderCellDef>Created</th>
+          <td mat-cell *matCellDef="let row">{{ row.createdAt | date:'yyyy-MM-dd HH:mm' }}</td>
+        </ng-container>
+
+        <!-- Actions -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="text-end">Actions</th>
+          <td mat-cell *matCellDef="let row" class="text-end">
+            <button mat-icon-button color="primary" (click)="open(row)" matTooltip="Open details">
+              <mat-icon>open_in_new</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="remove(row)" [disabled]="loading" matTooltip="Delete">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+
+    <ng-template #empty>
+      <div class="py-4 text-center text-muted">No tickets</div>
+    </ng-template>
+  </mat-card>
 </div>
-
-<table mat-table [dataSource]="filtered()" class="mat-elevation-z2 full-width">
-
-  <!-- ID -->
-  <ng-container matColumnDef="id">
-    <th mat-header-cell *matHeaderCellDef>ID</th>
-    <td mat-cell *matCellDef="let row">{{ row.id }}</td>
-  </ng-container>
-
-  <!-- Title -->
-  <ng-container matColumnDef="title">
-    <th mat-header-cell *matHeaderCellDef>Title</th>
-    <td mat-cell *matCellDef="let row">{{ row.title }}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="type">
-    <th mat-header-cell *matHeaderCellDef>Type</th>
-    <td mat-cell *matCellDef="let row">
-      <span class="chip" [class]="typeClass(row.type)">
-        {{ row.type }}
-      </span>
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="priority">
-    <th mat-header-cell *matHeaderCellDef>Priority</th>
-    <td mat-cell *matCellDef="let row">
-      <span class="chip" [class]="priorityClass(row.priority)">
-        {{ row.priority }}
-      </span>
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="state">
-    <th mat-header-cell *matHeaderCellDef>State</th>
-    <td mat-cell *matCellDef="let row">
-      <span class="chip" [class]="stateClass(row.state)">
-        {{ row.state }}
-      </span>
-    </td>
-  </ng-container>
-
-
-  <!-- UpdatedAt -->
-  <ng-container matColumnDef="updatedAt">
-    <th mat-header-cell *matHeaderCellDef>Updated</th>
-    <td mat-cell *matCellDef="let row">
-      {{ row.updatedAt | dateTime }}
-    </td>
-  </ng-container>
-
-  <!-- Assignee -->
-  <ng-container matColumnDef="assignee">
-    <th mat-header-cell *matHeaderCellDef>Assignee</th>
-    <td mat-cell *matCellDef="let row">
-      {{ row.assigneeId ?? '-' }}
-    </td>
-  </ng-container>
-
-  <!-- Actions -->
-  <ng-container matColumnDef="actions">
-    <th mat-header-cell *matHeaderCellDef class="center">Actions</th>
-    <td mat-cell *matCellDef="let row" class="center">
-      <button mat-icon-button color="primary" (click)="view(row)" title="View">
-        <mat-icon>open_in_new</mat-icon>
-      </button>
-      <button mat-icon-button color="accent" (click)="edit(row)" title="Edit">
-        <mat-icon>edit</mat-icon>
-      </button>
-      <button mat-icon-button color="warn" (click)="remove(row)" [disabled]="saving" title="Delete">
-        <mat-icon>delete</mat-icon>
-      </button>
-    </td>
-  </ng-container>
-
-  <!-- Header and row templates -->
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-</table>

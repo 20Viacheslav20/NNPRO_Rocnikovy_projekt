@@ -1,43 +1,66 @@
-<a [routerLink]="['/projects', projectId, 'tickets']" class="back-link">
-  <mat-icon>arrow_back</mat-icon> Back to tickets
-</a>
+<!-- src/app/pages/tickets/ticket-detail/ticket-detail.component.html -->
+<div class="ticket-detail container">
+  <h2>Ticket detail</h2>
 
-<mat-card *ngIf="ticket" class="ticket-card">
-  <mat-card-title>Ticket #{{ ticket.id }} — {{ ticket.title }}</mat-card-title>
-  <mat-card-content>
-    <div class="grid">
-      <div><strong>Type:</strong> {{ ticket.type }}</div>
-      <div><strong>Priority:</strong> {{ ticket.priority }}</div>
-      <div><strong>State:</strong> {{ ticket.state }}</div>
-      <div><strong>Updated:</strong> {{ ticket.updatedAt | dateTime }}</div>
-      <div><strong>Assignee ID:</strong> {{ ticket.assigneeId ?? '-' }}</div>
-      <div><strong>Project:</strong> {{ getProjectId() }}</div>
-    </div>
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <mat-progress-spinner *ngIf="loading" mode="indeterminate" diameter="28"></mat-progress-spinner>
+    <span *ngIf="error" class="text-danger">{{ error }}</span>
+  </div>
 
-    <div class="files-box">
-      <h3>Files</h3>
-      <p>No files yet.</p>
-    </div>
-  </mat-card-content>
-</mat-card>
+  <ng-container *ngIf="ticket as t">
+    <mat-card class="mb-3">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <strong>ID:</strong> <code>{{ t.id }}</code>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <strong>Created:</strong> {{ t.createdAt | date:'yyyy-MM-dd HH:mm' }}
+        </div>
 
-<mat-card class="comments-card">
-  <mat-card-title>Comments</mat-card-title>
-  <mat-card-content>
-    <div *ngIf="!comments?.length" class="muted">No comments yet.</div>
+        <div class="col-md-6">
+          <mat-form-field class="w-100" appearance="outline">
+            <mat-label>Name</mat-label>
+            <input matInput [(ngModel)]="t.name" />
+          </mat-form-field>
+        </div>
 
-    <div class="comment" *ngFor="let c of comments">
-      <div class="meta">
-        <strong>{{ c.author?.email || 'Unknown' }}</strong>
-        <span class="spacer"></span>
-        <span>{{ c.createdAt | dateTime }}</span>
+        <div class="col-md-3">
+          <mat-form-field class="w-100" appearance="outline">
+            <mat-label>Type</mat-label>
+            <input matInput [value]="t.type" disabled />
+          </mat-form-field>
+        </div>
+
+        <div class="col-md-3">
+          <mat-form-field class="w-100" appearance="outline">
+            <mat-label>Priority</mat-label>
+            <input matInput [value]="t.priority" disabled />
+          </mat-form-field>
+        </div>
+
+        <div class="col-md-4">
+          <mat-form-field class="w-100" appearance="outline">
+            <mat-label>State</mat-label>
+            <mat-select [(ngModel)]="t.state">
+              <mat-option *ngFor="let s of states" [value]="s">{{ s }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="col-md-12">
+          <mat-form-field class="w-100" appearance="outline">
+            <mat-label>Description</mat-label>
+            <textarea matInput rows="4" [(ngModel)]="t.description"></textarea>
+          </mat-form-field>
+        </div>
+
+        <div class="col-md-12 text-end">
+          <button mat-flat-button color="primary" (click)="save()" [disabled]="loading">
+            <mat-icon>save</mat-icon>
+            Save
+          </button>
+        </div>
       </div>
-      <div class="message">{{ c.message }}</div>
-    </div>
-
-    <div class="add-box">
-      <textarea [(ngModel)]="newComment" placeholder="Write a comment..."></textarea>
-      <button mat-flat-button color="primary" (click)="addComment()" [disabled]="saving || !newComment?.trim()">Add</button>
-    </div>
-  </mat-card-content>
-</mat-card>
+    </mat-card>
+  </ng-container>
+</div>

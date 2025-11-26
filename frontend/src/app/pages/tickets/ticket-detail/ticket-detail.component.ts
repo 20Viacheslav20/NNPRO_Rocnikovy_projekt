@@ -1,76 +1,88 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Ticket, TicketRequest, TicketComment } from '../models/ticket.models';
-import { TicketService } from '../../../core/services/ticket.service';
-import { DateTimePipe } from '../../../shared/pipes/date-time.pipe';
+import { ActivatedRoute, ParamMap } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
+import { TicketService, Ticket, TicketUpdateRequest, TicketState } from '../../../core/services/ticket.service';
+
+import { MatCardModule } from '@angular/material/card';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatOptionModule } from '@angular/material/core';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-    selector: 'app-ticket-detail',
-    standalone: true,
-    imports: [
-        CommonModule, RouterLink, FormsModule,
-        MatCardModule, MatButtonModule, MatIconModule, DateTimePipe
-    ],
-    templateUrl: './ticket-detail.component.html',
-    styleUrls: ['./ticket-detail.component.scss']
+  selector: 'app-ticket-detail',
+  standalone: true,
+  imports: [
+    CommonModule, FormsModule, DatePipe,
+    MatCardModule, MatProgressSpinnerModule, MatFormFieldModule, MatInputModule,
+    MatSelectModule, MatOptionModule, MatButtonModule, MatIconModule
+  ],
+  templateUrl: './ticket-detail.component.html',
+  styleUrls: ['./ticket-detail.component.scss'],
 })
-export class TicketDetailComponent {
-    projectId!: number;
-    ticketId!: number;
-    ticket?: Ticket;
+export class TicketDetailComponent implements OnInit, OnDestroy {
+  projectId!: string;
+  ticketId!: string;
 
-    comments: TicketComment[] = [];
-    newComment = '';
-    saving = false;
+  ticket: Ticket | null = null;
+  loading = false;
+  error = '';
 
-    constructor(
-        private route: ActivatedRoute,
-        private service: TicketService
-    ) {
-        this.route.paramMap.subscribe((p: ParamMap) => {
-            this.projectId = Number(p.get('projectId'));
-            this.ticketId = Number(p.get('ticketId'));
-            this.loadTicket();
-            this.loadComments();
-        });
-    }
+  readonly states: TicketState[] = ['OPEN', 'IN_PROGRESS', 'DONE'];
 
-    loadTicket(): void {
-        this.service.get(this.projectId, this.ticketId).subscribe(t => this.ticket = t);
-    }
+  private readonly destroy$ = new Subject<void>();
 
-    loadComments(): void {
-        this.service.listComments(this.projectId, this.ticketId).subscribe(c => this.comments = c);
-    }
+  constructor(private readonly route: ActivatedRoute, private readonly svc: TicketService) {}
 
-    addComment(): void {
-        const msg = this.newComment?.trim();
-        if (!msg) return;
-        this.saving = true;
-        this.service.addComment(this.projectId, this.ticketId, msg).subscribe({
-            next: () => {
-                this.saving = false;
-                this.newComment = '';
-                this.loadComments();
-            },
-            error: () => this.saving = false
-        });
-    }
+  ngOnInit(): void {
+    this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe((p: ParamMap) => {
+      this.projectId = p.get('projectId')!;
+      this.ticketId = p.get('ticketId')!;
+      this.load();
+    });
+  }
 
-    getProjectId(): number {
-        const p = this.ticket?.project;
-        if (!p) return 0;
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
-        if (typeof p === 'object' && 'id' in p) {
-            return p.id;
-        }
+  load(): void {
+    this.loading = true;
+    this.error = '';
+    this.svc.get(this.projectId, this.ticketId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (t) => {
+        this.ticket = t;
+        this.loading = false;
+      },
+      error: (e) => {
+        this.loading = false;
+        this.error = e?.error?.message || 'Не удалось загрузить тикет.';
+      },
+    });
+  }
 
-        return p as number;
-    }
-
+  save(): void {
+    if (!this.ticket) return;
+    const body: TicketUpdateRequest = {
+      name: (this.ticket.name ?? '').trim(),
+      type: this.ticket.type,
+      priority: this.ticket.priority,
+      state: this.ticket.state,
+      description: this.ticket.description ?? null,  // ← гарантированно string|null
+    };
+    this.loading = true;
+    this.svc.update(this.projectId, this.ticket.id, body).subscribe({
+      next: () => this.load(),
+      error: (e) => {
+        this.loading = false;
+        this.error = e?.error?.message || 'Не удалось сохранить изменения.';
+      },
+    });
+  }
 }
