@@ -9,7 +9,7 @@ export class AuthService {
 
   private baseURL: string = `${environment.apiUrl}/auth`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
 
   login(email: string, password: string) {
@@ -24,17 +24,12 @@ export class AuthService {
     );
   }
 
-  register(email: string, password: string) {
-    return this.http.post<string>(
-      `${this.baseURL}/register`,
-      {
-        username: email,
-        email,
-        password
-      },
-      { responseType: 'text' as 'json' }
+  register(data: any) {
+    return this.http.post(`${this.baseURL}/register`, data).pipe(
+      map(() => true)
     );
   }
+
 
   logout() {
     localStorage.removeItem('token');

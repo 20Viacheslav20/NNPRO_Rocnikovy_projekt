@@ -1,5 +1,4 @@
 package com.tsystem.controller;
-import com.tsystem.model.Project;
 
 import com.tsystem.model.dto.request.ProjectCreateRequest;
 import com.tsystem.model.dto.request.ProjectUpdateRequest;
