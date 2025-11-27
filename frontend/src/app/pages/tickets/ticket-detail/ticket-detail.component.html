@@ -3,41 +3,15 @@
 </a>
 
 <mat-card *ngIf="ticket" class="ticket-card">
-  <mat-card-title>Ticket #{{ ticket.id }} — {{ ticket.title }}</mat-card-title>
+  <mat-card-title>Ticket #{{ ticket.id }} — {{ ticket.name }}</mat-card-title>
   <mat-card-content>
     <div class="grid">
-      <div><strong>Type:</strong> {{ ticket.type }}</div>
-      <div><strong>Priority:</strong> {{ ticket.priority }}</div>
-      <div><strong>State:</strong> {{ ticket.state }}</div>
-      <div><strong>Updated:</strong> {{ ticket.updatedAt | dateTime }}</div>
-      <div><strong>Assignee ID:</strong> {{ ticket.assigneeId ?? '-' }}</div>
+      <div><strong>Type:</strong> {{ ticket.type | ticketType }}</div>
+      <div><strong>Priority:</strong> {{ ticket.priority | ticketPriority }}</div>
+      <div><strong>State:</strong> {{ ticket.state | ticketState }}</div>
+      <div><strong>Updated:</strong> {{ ticket.createdAt | dateTime }}</div>
+      <div><strong>Assignee:</strong> {{ ticket.assigneeId ?? '-' }}</div>
       <div><strong>Project:</strong> {{ getProjectId() }}</div>
-    </div>
-
-    <div class="files-box">
-      <h3>Files</h3>
-      <p>No files yet.</p>
-    </div>
-  </mat-card-content>
-</mat-card>
-
-<mat-card class="comments-card">
-  <mat-card-title>Comments</mat-card-title>
-  <mat-card-content>
-    <div *ngIf="!comments?.length" class="muted">No comments yet.</div>
-
-    <div class="comment" *ngFor="let c of comments">
-      <div class="meta">
-        <strong>{{ c.author?.email || 'Unknown' }}</strong>
-        <span class="spacer"></span>
-        <span>{{ c.createdAt | dateTime }}</span>
-      </div>
-      <div class="message">{{ c.message }}</div>
-    </div>
-
-    <div class="add-box">
-      <textarea [(ngModel)]="newComment" placeholder="Write a comment..."></textarea>
-      <button mat-flat-button color="primary" (click)="addComment()" [disabled]="saving || !newComment?.trim()">Add</button>
     </div>
   </mat-card-content>
 </mat-card>

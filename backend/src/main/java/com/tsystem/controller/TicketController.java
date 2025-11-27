@@ -1,7 +1,6 @@
 package com.tsystem.controller;
 
 
-import com.tsystem.model.Ticket;
 import com.tsystem.model.dto.request.TicketCreateRequest;
 import com.tsystem.model.dto.request.TicketUpdateRequest;
 import com.tsystem.model.dto.response.TicketResponse;

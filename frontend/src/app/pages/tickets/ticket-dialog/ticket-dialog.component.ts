@@ -7,6 +7,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { Ticket, TicketRequest } from '../models/ticket.models';
+import { TicketTypePipe } from '../../../shared/pipes/ticketType.pipe';
+import { TicketStatePipe } from '../../../shared/pipes/ticketState.pipe';
+import { TicketPriorityPipe } from '../../../shared/pipes/ticketPriority.pipe';
 
 type DialogMode = 'create' | 'edit';
 
@@ -20,7 +23,7 @@ interface DialogData {
     standalone: true,
     imports: [
         CommonModule, MatDialogModule, ReactiveFormsModule,
-        MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule
+        MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule,
     ],
     templateUrl: './ticket-dialog.component.html',
     styleUrls: ['./ticket-dialog.component.scss']
@@ -37,10 +40,10 @@ export class TicketDialogComponent {
     ) {
         this.mode = data.mode;
         this.form = this.fb.group({
-            title: [data.ticket?.title ?? '', [Validators.required]],
-            type: [data.ticket?.type ?? 'BUG', [Validators.required]],
-            priority: [data.ticket?.priority ?? 'MEDIUM', [Validators.required]],
-            state: [data.ticket?.state ?? 'OPEN'],
+            name: [data.ticket?.name ?? '', [Validators.required]],
+            type: [data.ticket?.type ?? 'bug', [Validators.required]],
+            priority: [data.ticket?.priority ?? 'med', [Validators.required]],
+            state: [data.ticket?.state ?? 'open'],
             assigneeId: [data.ticket?.assigneeId ?? null]
         });
     }
@@ -52,7 +55,7 @@ export class TicketDialogComponent {
     save(): void {
         if (this.form.invalid) return;
         const value = this.form.value as TicketRequest;
-        // при создании state опционален: можно удалить если пуст
+
         if (this.mode === 'create' && !value.state) delete value.state;
         this.ref.close(value);
     }

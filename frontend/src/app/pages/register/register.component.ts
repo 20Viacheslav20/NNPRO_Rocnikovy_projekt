@@ -33,7 +33,6 @@ export class RegisterComponent {
     this.auth.register(request).subscribe({
       next: () => this.router.navigateByUrl('/login'),
       error: err => {
-        console.error(err);
         this.error = "Registration failed";
       }
     });

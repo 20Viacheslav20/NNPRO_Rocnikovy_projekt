@@ -11,14 +11,17 @@ export class AuthService {
 
   constructor(private http: HttpClient) { }
 
-
-  login(email: string, password: string) {
-    return this.http.post<string>(
+  login(login: string, password: string) {
+    return this.http.post(
       `${this.baseURL}/login`,
-      { email, password },
-      { responseType: 'text' as 'json' }
+      { login, password },
+      { responseType: 'text' }
     ).pipe(
-      tap(token => {
+      tap(response => {
+        const obj = JSON.parse(response);
+        const token = obj.token;
+
+        console.log(token);
         localStorage.setItem('token', token);
       })
     );

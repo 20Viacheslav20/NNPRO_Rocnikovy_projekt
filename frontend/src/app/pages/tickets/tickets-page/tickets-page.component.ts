@@ -12,24 +12,27 @@ import { FormsModule } from '@angular/forms';
 import { Ticket, TicketRequest } from '../models/ticket.models';
 import { TicketService } from '../../../core/services/ticket.service';
 import { DateTimePipe } from '../../../shared/pipes/date-time.pipe';
+import { TicketTypePipe } from '../../../shared/pipes/ticketType.pipe';
+import { TicketPriorityPipe } from '../../../shared/pipes/ticketPriority.pipe';
+import { TicketStatePipe } from '../../../shared/pipes/ticketState.pipe';
 import { TicketDialogComponent } from '../ticket-dialog/ticket-dialog.component';
 
 @Component({
     selector: 'app-tickets-page',
     standalone: true,
     imports: [
-        CommonModule, RouterLink, FormsModule,
+        CommonModule, FormsModule,
         MatTableModule, MatButtonModule, MatIconModule, MatDialogModule,
         MatFormFieldModule, MatSelectModule, MatInputModule,
-        DateTimePipe
+        DateTimePipe, TicketTypePipe, TicketPriorityPipe, TicketStatePipe
     ],
     templateUrl: './tickets-page.component.html',
     styleUrls: ['./tickets-page.component.scss']
 })
 export class TicketsPageComponent {
-    projectId!: number;
+    projectId!: string;
 
-    displayedColumns = ['id', 'title', 'type', 'priority', 'state', 'updatedAt', 'assignee', 'actions'];
+    displayedColumns = ['id', 'name', 'type', 'priority', 'state', 'createdAt', 'assignee', 'actions'];
     data: Ticket[] = [];
 
     search = '';
@@ -46,22 +49,21 @@ export class TicketsPageComponent {
         private dialog: MatDialog
     ) {
         this.route.paramMap.subscribe((p: ParamMap) => {
-            this.projectId = Number(p.get('projectId'));
+            this.projectId = p.get('projectId')!;
             this.load();
         });
     }
 
     load(): void {
         this.service.list(this.projectId).subscribe({
-            next: (items) => this.data = items,
-            error: () => { }
+            next: (items) => { this.data = items; console.log(items) }
         });
     }
 
     filtered(): Ticket[] {
         return this.data.filter(t => {
             const matchesSearch = this.search
-                ? (t.title?.toLowerCase().includes(this.search.toLowerCase()) || String(t.id).includes(this.search))
+                ? (t.name?.toLowerCase().includes(this.search.toLowerCase()) || String(t.id).includes(this.search))
                 : true;
             const matchesType = this.typeFilter ? t.type === this.typeFilter : true;
             const matchesState = this.stateFilter ? t.state === this.stateFilter : true;
@@ -118,48 +120,29 @@ export class TicketsPageComponent {
         });
     }
 
-    exportCsv(): void {
-        this.service.exportCsv(this.projectId).subscribe(blob => {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'tickets.csv';
-            a.click();
-            URL.revokeObjectURL(url);
-        });
-    }
-
-    generate(): void {
-        this.saving = true;
-        this.service.generate(this.projectId, 10).subscribe({
-            next: () => { this.saving = false; this.load(); },
-            error: () => { this.saving = false; }
-        });
-    }
-
     typeClass(type: string): string {
         switch (type) {
-            case 'BUG': return 'chip--bug';
-            case 'FEATURE': return 'chip--feature';
-            case 'TASK': return 'chip--task';
+            case 'bug': return 'chip--bug';
+            case 'feature': return 'chip--feature';
+            case 'task': return 'chip--task';
             default: return '';
         }
     }
 
     priorityClass(priority: string): string {
         switch (priority) {
-            case 'LOW': return 'chip--low';
-            case 'MEDIUM': return 'chip--medium';
-            case 'HIGH': return 'chip--high';
+            case 'low': return 'chip--low';
+            case 'med': return 'chip--medium';
+            case 'high': return 'chip--high';
             default: return '';
         }
     }
 
     stateClass(state: string): string {
         switch (state) {
-            case 'OPEN': return 'chip--open';
-            case 'IN_PROGRESS': return 'chip--progress';
-            case 'DONE': return 'chip--done';
+            case 'open': return 'chip--open';
+            case 'in_progress': return 'chip--progress';
+            case 'done': return 'chip--done';
             default: return '';
         }
     }
