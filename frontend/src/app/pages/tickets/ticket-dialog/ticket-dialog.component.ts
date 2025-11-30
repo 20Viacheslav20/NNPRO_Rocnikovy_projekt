@@ -6,7 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { Ticket, TicketRequest } from '../models/ticket.models';
+import { Ticket, TicketRequest } from '../ticket.models';
 import { TicketTypePipe } from '../../../shared/pipes/ticketType.pipe';
 import { TicketStatePipe } from '../../../shared/pipes/ticketState.pipe';
 import { TicketPriorityPipe } from '../../../shared/pipes/ticketPriority.pipe';

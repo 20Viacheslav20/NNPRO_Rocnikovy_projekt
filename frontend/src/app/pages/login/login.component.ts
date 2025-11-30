@@ -17,11 +17,11 @@ export class LoginComponent {
   password = '';
   error = '';
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) { }
 
   onLogin() {
     this.auth.login(this.email, this.password).subscribe({
-      next: () => this.router.navigateByUrl('/home'),
+      next: () => this.router.navigateByUrl('/projects'),
       error: err => this.error = err
     });
   }

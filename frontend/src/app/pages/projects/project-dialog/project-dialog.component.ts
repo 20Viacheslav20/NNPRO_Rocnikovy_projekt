@@ -1,17 +1,13 @@
 import { Component, Inject, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-
-import { ProjectService } from '../../../../core/services/project.service';
-import { Project } from '../../models/project.model';
-import { ProjectRequest } from '../../models/project-request.model';
-import { ProjectStatus } from '../../models/project-status.enum';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ProjectService } from '../../../core/services/project.service';
+import { Project } from '../models/project.model';
+import { ProjectRequest } from '../models/project-request.model';
+import { ProjectStatus } from '../models/project-status.enum';
+import { MaterialModules } from '../../../material.module'
 
 type DialogMode = 'create' | 'edit';
 
@@ -26,12 +22,7 @@ interface DialogData {
     imports: [
         CommonModule,
         ReactiveFormsModule,
-        MatDialogModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatSelectModule,
-        MatButtonModule,
-        MatSnackBarModule
+        MaterialModules
     ],
     templateUrl: './project-dialog.component.html',
     styleUrls: ['./project-dialog.component.scss']
@@ -58,10 +49,14 @@ export class ProjectDialogComponent implements OnInit {
             description: [
                 this.data.project?.description ?? ''
             ],
-            status: [
-                this.data.project?.status ?? ProjectStatus.ACTIVE,
-                [Validators.required]
-            ]
+            ...(this.data.mode === 'edit'
+                ? {
+                    status: [
+                        this.data.project?.status ?? ProjectStatus.ACTIVE,
+                        [Validators.required]
+                    ]
+                }
+                : {})
         });
     }
 

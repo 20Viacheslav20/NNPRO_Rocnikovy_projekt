@@ -25,7 +25,7 @@ public class ProjectController {
     // GET /projects
     @GetMapping
     public List<ProjectResponse> list(@AuthenticationPrincipal UserDetails principal) {
-        return projects.listMine(principal.getUsername())
+        return projects.findAll()
                 .stream().map(ProjectMapper::toResponse).toList();
     }
 
@@ -39,9 +39,8 @@ public class ProjectController {
 
     // GET /projects/{projectId}
     @GetMapping("/{projectId}")
-    public ProjectResponse get(@PathVariable UUID projectId,
-                               @AuthenticationPrincipal UserDetails principal) {
-        return ProjectMapper.toResponse(projects.getMine(projectId, principal.getUsername()));
+    public ProjectResponse get(@PathVariable UUID projectId) {
+        return ProjectMapper.toResponse(projects.findById(projectId));
     }
 
     // PUT /projects/{projectId}

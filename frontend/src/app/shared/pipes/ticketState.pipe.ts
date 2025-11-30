@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { TicketState } from '../../../app/pages/tickets/models/ticket.models';
+import { TicketState } from '../../pages/tickets/ticket.models';
 
 @Pipe({ name: 'ticketState', standalone: true })
 export class TicketStatePipe implements PipeTransform {

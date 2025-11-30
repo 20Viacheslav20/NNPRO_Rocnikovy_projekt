@@ -1,63 +1,99 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatTableModule } from '@angular/material/table';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatCardModule } from '@angular/material/card';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
-
-import { ProjectService } from '../../core/services/project.service';
-import { Project } from '../projects/models/project.model';
-import { ProjectStatus } from '../projects/models/project-status.enum';
-import { ProjectDialogComponent } from '../projects/components/project-dialog/project-dialog.component';
+import { ProjectService } from '../../../core/services/project.service';
+import { Project } from '../models/project.model';
+import { ProjectDialogComponent } from '../project-dialog/project-dialog.component';
+import { MaterialModules } from '../../../material.module'
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatSort } from '@angular/material/sort';
+import { ViewChild } from '@angular/core';
+import { DateTimePipe } from '../../../shared/pipes/date-time.pipe';
 
 @Component({
-  selector: 'app-home',
+  selector: 'app-projects-page',
   standalone: true,
   imports: [
     CommonModule,
-    MatTableModule,
-    MatIconModule,
-    MatButtonModule,
-    MatDialogModule,
-    MatToolbarModule,
-    MatCardModule,
-    MatSnackBarModule,
-    MatProgressBarModule
+    MaterialModules,
+    DateTimePipe
   ],
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  templateUrl: './projects-page.component.html',
+  styleUrls: ['./projects-page.component.scss']
 })
-export class HomeComponent implements OnInit {
+export class ProjectsPageComponent implements OnInit {
   private readonly projectService = inject(ProjectService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
   private readonly router = inject(Router);
 
-  displayedColumns = ['id', 'name', 'description', 'status', 'open', 'actions'];
+  displayedColumns = ['name', 'description', 'status', 'owner', 'createdAt', 'actions'];
+  statusFilter = signal<string>(''); // ACTIVE | ARCHIVED | '' (all)
 
   data = signal<Project[]>([]);
   loading = signal<boolean>(false);
 
+  dataSource = new MatTableDataSource<Project>([]);
+
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
+
   ngOnInit(): void {
     this.load();
+
+    this.dataSource.filterPredicate = (project: Project, filter: string) => {
+      const data = JSON.parse(filter);
+
+      const nameMatch = project.name.toLowerCase().includes(data.name);
+      const statusMatch =
+        data.status === '' || project.status === data.status;
+
+      return nameMatch && statusMatch;
+    };
+  }
+
+  ngAfterViewInit(): void {
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+
+
+  }
+
+  applyStatusFilter(value: string) {
+    this.statusFilter.set(value);
+    this.dataSource.filter = JSON.stringify({
+      name: '',
+      status: value,
+    });
+  }
+
+  applyNameFilter(value: string) {
+    this.dataSource.filter = JSON.stringify({
+      name: value.trim().toLowerCase(),
+      status: this.statusFilter(),
+    });
   }
 
   load(): void {
     this.loading.set(true);
+
     this.projectService.getAll().subscribe({
       next: (projects) => {
+        projects = projects.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
         this.data.set(projects);
+        this.dataSource.data = projects;
         this.loading.set(false);
       },
       error: (err) => {
         this.loading.set(false);
         this.snack.open(
-          this.extractMessage(err) ?? 'Failed to load projects',
+          typeof err === 'string' ? err : (this.extractMessage(err) ?? 'Failed'),
           'Close',
           { duration: 3000 }
         );
@@ -67,7 +103,7 @@ export class HomeComponent implements OnInit {
 
   create(): void {
     const ref = this.dialog.open(ProjectDialogComponent, {
-      width: '520px',
+      width: '720px',
       data: { mode: 'create' }
     });
 
@@ -81,7 +117,7 @@ export class HomeComponent implements OnInit {
 
   edit(project: Project): void {
     const ref = this.dialog.open(ProjectDialogComponent, {
-      width: '520px',
+      width: '720px',
       data: { mode: 'edit', project }
     });
 
@@ -113,12 +149,6 @@ export class HomeComponent implements OnInit {
 
   openProject(project: Project): void {
     this.router.navigate(['/projects', project.id, 'tickets']);
-  }
-
-  statusChipClass(status: ProjectStatus): string {
-    return status === ProjectStatus.ACTIVE
-      ? 'chip chip--active'
-      : 'chip chip--archived';
   }
 
   private extractMessage(err: any): string | undefined {

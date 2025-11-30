@@ -3,7 +3,7 @@
 </h2>
 <div mat-dialog-content>
   <form [formGroup]="form" class="form">
-    <br/>
+    <br />
     <mat-form-field appearance="outline">
       <mat-label>Name</mat-label>
       <input matInput formControlName="name" maxlength="120" />
@@ -17,13 +17,24 @@
       <textarea matInput formControlName="description" rows="3"></textarea>
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
+    <!-- <mat-form-field appearance="outline">
       <mat-label>Status</mat-label>
       <mat-select formControlName="status">
         <mat-option [value]="ProjectStatus.ACTIVE">ACTIVE</mat-option>
         <mat-option [value]="ProjectStatus.ARCHIVED">ARCHIVED</mat-option>
       </mat-select>
-    </mat-form-field>
+    </mat-form-field> -->
+
+    <ng-container *ngIf="data.mode === 'edit'">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option [value]="ProjectStatus.ACTIVE">Active</mat-option>
+          <mat-option [value]="ProjectStatus.ARCHIVED">Archived</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </ng-container>
+
   </form>
 </div>
 

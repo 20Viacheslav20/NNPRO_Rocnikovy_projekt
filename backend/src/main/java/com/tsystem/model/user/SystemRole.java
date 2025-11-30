@@ -15,7 +15,6 @@ import static com.tsystem.model.user.SystemPermission.getUserPermissions;
 @RequiredArgsConstructor
 public enum SystemRole {
 
-
     //system level roles
     SYSTEM_USER(getUserPermissions()),
     SYSTEM_ADMIN(getAdminPermissions()),

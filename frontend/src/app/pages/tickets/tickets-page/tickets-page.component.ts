@@ -1,29 +1,23 @@
 import { Component, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
-import { MatTableModule } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatInputModule } from '@angular/material/input';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
-import { Ticket, TicketRequest } from '../models/ticket.models';
+import { Ticket, TicketRequest } from '../ticket.models';
 import { TicketService } from '../../../core/services/ticket.service';
 import { DateTimePipe } from '../../../shared/pipes/date-time.pipe';
 import { TicketTypePipe } from '../../../shared/pipes/ticketType.pipe';
 import { TicketPriorityPipe } from '../../../shared/pipes/ticketPriority.pipe';
 import { TicketStatePipe } from '../../../shared/pipes/ticketState.pipe';
 import { TicketDialogComponent } from '../ticket-dialog/ticket-dialog.component';
+import { MaterialModules } from '../../../material.module'
 
 @Component({
     selector: 'app-tickets-page',
     standalone: true,
     imports: [
         CommonModule, FormsModule,
-        MatTableModule, MatButtonModule, MatIconModule, MatDialogModule,
-        MatFormFieldModule, MatSelectModule, MatInputModule,
+        MaterialModules,
         DateTimePipe, TicketTypePipe, TicketPriorityPipe, TicketStatePipe
     ],
     templateUrl: './tickets-page.component.html',
@@ -32,7 +26,7 @@ import { TicketDialogComponent } from '../ticket-dialog/ticket-dialog.component'
 export class TicketsPageComponent {
     projectId!: string;
 
-    displayedColumns = ['id', 'name', 'type', 'priority', 'state', 'createdAt', 'assignee', 'actions'];
+    displayedColumns = ['name', 'type', 'priority', 'state', 'createdAt', 'assignee', 'actions'];
     data: Ticket[] = [];
 
     search = '';
@@ -63,7 +57,7 @@ export class TicketsPageComponent {
     filtered(): Ticket[] {
         return this.data.filter(t => {
             const matchesSearch = this.search
-                ? (t.name?.toLowerCase().includes(this.search.toLowerCase()) || String(t.id).includes(this.search))
+                ? (t.name?.toLowerCase().includes(this.search.toLowerCase()))
                 : true;
             const matchesType = this.typeFilter ? t.type === this.typeFilter : true;
             const matchesState = this.stateFilter ? t.state === this.stateFilter : true;
@@ -122,28 +116,30 @@ export class TicketsPageComponent {
 
     typeClass(type: string): string {
         switch (type) {
-            case 'bug': return 'chip--bug';
-            case 'feature': return 'chip--feature';
-            case 'task': return 'chip--task';
+            case 'bug': return 'chip-bug';
+            case 'feature': return 'chip-feature';
+            case 'task': return 'chip-task';
             default: return '';
         }
     }
 
     priorityClass(priority: string): string {
         switch (priority) {
-            case 'low': return 'chip--low';
-            case 'med': return 'chip--medium';
-            case 'high': return 'chip--high';
+            case 'low': return 'chip-low';
+            case 'med': return 'chip-medium';
+            case 'high': return 'chip-high';
             default: return '';
         }
     }
 
     stateClass(state: string): string {
         switch (state) {
-            case 'open': return 'chip--open';
-            case 'in_progress': return 'chip--progress';
-            case 'done': return 'chip--done';
+            case 'open': return 'chip-open';
+            case 'in_progress': return 'chip-progress';
+            case 'done': return 'chip-done';
             default: return '';
         }
     }
+
+
 }

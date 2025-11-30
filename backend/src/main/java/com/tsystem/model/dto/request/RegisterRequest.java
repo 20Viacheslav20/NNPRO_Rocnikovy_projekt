@@ -8,9 +8,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class RegisterRequest {
-    @NotBlank
-    @Size(min = 3, max = 60)
-    private String username;
 
     @NotBlank
     @Email

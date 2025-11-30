@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Ticket, TicketRequest } from '../../pages/tickets/models/ticket.models';
+import { Ticket, TicketRequest } from '../../pages/tickets/ticket.models';
 import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
 

@@ -53,6 +53,9 @@ public class JwtService {
             throw new IllegalArgumentException("User ID cannot be null");
         }
         claims.put("userId", user.getId());
+        claims.put("name", user.getName());
+        claims.put("surname", user.getSurname());
+
         System.out.println("Generating token with claims: " + claims); // Логирование
         return generateToken(claims, userDetails);
     }

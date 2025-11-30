@@ -1,5 +1,8 @@
-.full-width {
-  width: 100%;
+/* Общая карточка */
+.card {
+  margin: 16px;
+  padding: 16px;
+  border-radius: 12px;
 }
 
 .center {
@@ -26,50 +29,104 @@
   flex-wrap: wrap;
 }
 
-.chip {
-  padding: 3px 10px;
-  border-radius: 16px;
+mat-chip {
+  color: #fff !important;
   font-size: 12px;
   font-weight: 600;
-  color: #fff;
-  display: inline-block;
+  padding: 3px 10px !important;
+  border-radius: 16px !important;
 }
 
 /* TYPES */
-.chip--bug {
-  background: #d32f2f;
+.chip-bug {
+  background-color: #ffebee !important;
+  color: #c62828 !important;
+  font-weight: 600;
 }
 
-.chip--feature {
-  background: #1976d2;
+.chip-feature {
+  background-color: #e3f2fd !important;
+  color: #1565c0 !important;
+  font-weight: 600;
 }
 
-.chip--task {
-  background: #7b1fa2;
+.chip-task {
+  background-color: #fff3e0 !important;
+  color: #ef6c00 !important;
+  font-weight: 600;
 }
 
 /* PRIORITIES */
-.chip--low {
-  background: #388e3c;
+.chip-low {
+  background-color: #e8f5e9 !important;
+  color: #2e7d32 !important;
+  font-weight: 600;
 }
 
-.chip--medium {
-  background: #ffa000;
+.chip-medium {
+  background-color: #fff8e1 !important;
+  color: #f9a825 !important;
+  font-weight: 600;
 }
 
-.chip--high {
-  background: #d32f2f;
+.chip-high {
+  background-color: #ffebee !important;
+  color: #c62828 !important;
+  font-weight: 600;
 }
 
 /* STATES */
-.chip--open {
-  background: #0288d1;
+.chip-open {
+  background-color: #e1f5fe !important;
+  color: #0277bd !important;
+  font-weight: 600;
 }
 
-.chip--progress {
-  background: #f57c00;
+.chip-progress {
+  background-color: #fff3e0 !important;
+  color: #ef6c00 !important;
+  font-weight: 600;
 }
 
-.chip--done {
-  background: #2e7d32;
+.chip-done {
+  background-color: #e8f5e9 !important;
+  color: #2e7d32 !important;
+  font-weight: 600;
+}
+
+
+/* Таблица */
+.modern-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+}
+
+/* Заголовок */
+.header-row th {
+  background: #f5f7fa;
+  color: #424242;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 14px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+/* Обычная строка */
+.data-row td {
+  background: #ffffff;
+  padding: 14px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid #ececec;
+  transition: background 0.18s ease;
+}
+
+/* Hover строки — современно и легко */
+.data-row:hover td {
+  background: #f4f8fc;
+}
+
+/* Ячейки по типу */
+.cell-name {
+  font-weight: 600;
 }

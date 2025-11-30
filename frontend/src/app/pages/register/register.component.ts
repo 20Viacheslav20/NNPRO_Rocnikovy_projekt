@@ -23,7 +23,6 @@ export class RegisterComponent {
 
   onRegister() {
     const request = {
-      username: this.username,
       name: this.name,
       surname: this.surname,
       email: this.email,

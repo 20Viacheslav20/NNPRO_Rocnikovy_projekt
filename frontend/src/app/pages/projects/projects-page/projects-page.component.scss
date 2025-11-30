@@ -1,0 +1,104 @@
+/* Общая карточка */
+.card {
+  margin: 16px;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+/* Таблица */
+.modern-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+  /* строки выглядят как блоки */
+}
+
+/* Заголовок */
+.header-row th {
+  background: #f5f7fa;
+  color: #424242;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 14px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+/* Обычная строка */
+.data-row td {
+  background: #ffffff;
+  padding: 14px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid #ececec;
+  transition: background 0.18s ease;
+}
+
+/* Hover строки — современно и легко */
+.data-row:hover td {
+  background: #f4f8fc;
+}
+
+/* Ячейки по типу */
+.cell-name {
+  font-weight: 600;
+}
+
+.cell-description {
+  color: #616161;
+}
+
+.cell-actions {
+  text-align: right;
+}
+
+
+/* Пустой блок */
+.empty-state {
+  padding: 48px;
+  text-align: center;
+  opacity: 0.6;
+  font-size: 16px;
+}
+
+.search-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* Зелёный чип для активных */
+.chip-active {
+  background-color: #e8f5e9 !important;
+  color: #1b5e20 !important;
+  font-weight: 600;
+}
+
+/* Серый чип для архивных */
+.chip-archived {
+  background-color: #eeeeee !important;
+  color: #616161 !important;
+  font-weight: 600;
+}
+
+/* Вся строка делается серой */
+.row-archived {
+  background-color: #f5f5f5 !important;
+  opacity: 0.65;
+}
+
+/* При наведении не даём яркого цвета архиву */
+.row-archived:hover {
+  background-color: #e0e0e0 !important;
+}
+
+.create-btn {
+  background-color: #5C6BC0 !important;
+  color: white !important;
+  padding: 0 16px !important;
+  height: 36px !important;
+  border-radius: 8px !important;
+  font-weight: 500;
+
+  &:hover {
+    background-color: #0f4fb8 !important;
+  }
+}

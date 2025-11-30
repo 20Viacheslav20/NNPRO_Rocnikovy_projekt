@@ -24,10 +24,7 @@ public class ProjectService {
     private final ProjectRepository projects;
     private final UserRepository users;
 
-    private User me(String username) {
-        return users.findByUsername(username).orElseThrow(NotFoundException::new);
-    }
-
+    // TODO нужно переделать
     private Project mustOwnProject(UUID projectId, String username) {
         Project p = projects.findById(projectId).orElseThrow(NotFoundException::new);
         if (!p.getUser().getUsername().equals(username)) throw new ForbiddenException();
@@ -36,7 +33,9 @@ public class ProjectService {
 
     @Transactional
     public Project create(ProjectCreateRequest req, String username) {
-        User owner = me(username);
+        User owner = users.findByEmail(username)
+                .orElseThrow(NotFoundException::new);
+
         Project p = Project.builder()
                 .name(req.getName())
                 .description(req.getDescription())
@@ -46,13 +45,13 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<Project> listMine(String username) {
-        return projects.findByUserIdOrderByCreatedAtDesc(me(username).getId());
+    public List<Project> findAll() {
+        return projects.findAll();
     }
 
     @Transactional(readOnly = true)
-    public Project getMine(UUID projectId, String username) {
-        return mustOwnProject(projectId, username);
+    public Project findById(UUID uuid) {
+        return projects.findById(uuid).orElseThrow(NotFoundException::new);
     }
 
     @Transactional

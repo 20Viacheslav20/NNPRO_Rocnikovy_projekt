@@ -5,4 +5,5 @@ export interface Project {
   name: string;
   description?: string | null;
   status: ProjectStatus;
+  createdAt: string;
 }

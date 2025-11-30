@@ -3,13 +3,11 @@
 
   <form (ngSubmit)="onRegister()">
 
-    <input [(ngModel)]="username" name="username" placeholder="Username" required />
+    <input [(ngModel)]="email" name="email" placeholder="Email" type="email" required />
 
     <input [(ngModel)]="name" name="name" placeholder="First Name" required />
 
     <input [(ngModel)]="surname" name="surname" placeholder="Last Name" required />
-
-    <input [(ngModel)]="email" name="email" placeholder="Email" type="email" required />
 
     <input [(ngModel)]="password" name="password" type="password" placeholder="Password" required />
 
