@@ -5,7 +5,6 @@ import { TicketType } from '../../pages/tickets/ticket.models';
 export class TicketTypePipe implements PipeTransform {
 
     transform(value: TicketType): string {
-        debugger
         const map: Record<TicketType, string> = {
             bug: 'Bug',
             feature: 'Feature',

@@ -1,9 +1,9 @@
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.form-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
-  @media (max-width: 720px) {
-    grid-template-columns: 1fr;
-  }
+mat-form-field {
+  width: 100%;
 }

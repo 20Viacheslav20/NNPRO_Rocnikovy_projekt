@@ -34,5 +34,5 @@ export const MaterialModules = [
     MatTooltipModule,
     MatSelectModule,
     MatMenuModule,
-    MatDividerModule
+    MatDividerModule,
 ];

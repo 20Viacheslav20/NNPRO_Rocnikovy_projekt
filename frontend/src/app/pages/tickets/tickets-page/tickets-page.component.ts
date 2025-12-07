@@ -26,7 +26,7 @@ import { MaterialModules } from '../../../material.module'
 export class TicketsPageComponent {
     projectId!: string;
 
-    displayedColumns = ['name', 'type', 'priority', 'state', 'createdAt', 'assignee', 'actions'];
+    displayedColumns = ['name', 'type', 'priority', 'state', 'createdAt', 'owner', 'assignee', 'actions'];
     data: Ticket[] = [];
 
     search = '';
@@ -68,7 +68,8 @@ export class TicketsPageComponent {
 
     create(): void {
         const ref = this.dialog.open(TicketDialogComponent, {
-            width: '520px',
+            width: '60vw',
+            maxWidth: 'none',
             data: { mode: 'create' as const }
         });
 
@@ -84,7 +85,8 @@ export class TicketsPageComponent {
 
     edit(row: Ticket): void {
         const ref = this.dialog.open(TicketDialogComponent, {
-            width: '520px',
+            width: '60vw',
+            maxWidth: 'none',
             data: {
                 mode: 'edit' as const,
                 ticket: row
@@ -100,6 +102,7 @@ export class TicketsPageComponent {
             });
         });
     }
+
 
     view(row: Ticket): void {
         this.router.navigate(['/projects', this.projectId, 'tickets', row.id]);

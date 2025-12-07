@@ -1,47 +1,67 @@
 <h2 mat-dialog-title>{{ mode === 'create' ? 'Create ticket' : 'Edit ticket' }}</h2>
 
 <br />
-<div mat-dialog-content [formGroup]="form" class="form-grid">
+<div mat-dialog-content [formGroup]="form" class="form-vertical">
+
   <mat-form-field appearance="outline">
     <mat-label>Name</mat-label>
     <input matInput formControlName="name" />
-    <mat-error *ngIf="form.get('name')?.hasError('required')">Name is required</mat-error>
+    <mat-error *ngIf="form.get('name')?.hasError('required')">
+      Name is required
+    </mat-error>
   </mat-form-field>
+
+  <mat-form-field appearance="outline" class="description-field">
+    <mat-label>Description</mat-label>
+    <textarea matInput formControlName="description" rows="5"></textarea>
+
+    <mat-error *ngIf="form.get('description')?.hasError('required')">
+      Description is required
+    </mat-error>
+  </mat-form-field>
+
 
   <mat-form-field appearance="outline">
     <mat-label>Type</mat-label>
     <mat-select formControlName="type">
-      <mat-option value="bug">BUG</mat-option>
-      <mat-option value="feature">FEATURE</mat-option>
-      <mat-option value="task">TASK</mat-option>
+      <mat-option value="bug">Bug</mat-option>
+      <mat-option value="feature">Feature</mat-option>
+      <mat-option value="task">Task</mat-option>
     </mat-select>
   </mat-form-field>
 
   <mat-form-field appearance="outline">
     <mat-label>Priority</mat-label>
     <mat-select formControlName="priority">
-      <mat-option value="low">LOW</mat-option>
-      <mat-option value="med">MEDIUM</mat-option>
-      <mat-option value="high">HIGH</mat-option>
+      <mat-option value="low">Low</mat-option>
+      <mat-option value="med">Medium</mat-option>
+      <mat-option value="high">High</mat-option>
     </mat-select>
   </mat-form-field>
 
   <mat-form-field appearance="outline">
     <mat-label>State</mat-label>
     <mat-select formControlName="state">
-      <mat-option value="open">OPEN</mat-option>
-      <mat-option value="in_progress">IN PROGRESS</mat-option>
-      <mat-option value="done">DONE</mat-option>
+      <mat-option value="open">Open</mat-option>
+      <mat-option value="in_progress">In progress</mat-option>
+      <mat-option value="done">Done</mat-option>
     </mat-select>
   </mat-form-field>
 
   <mat-form-field appearance="outline">
     <mat-label>Assignee</mat-label>
-    <input matInput type="number" formControlName="assigneeId" />
-  </mat-form-field>
-</div>
+    <mat-select formControlName="assigneeId">
+      <mat-option *ngFor="let u of users" [value]="u.id">
+        {{ u.surname }} {{ u.name }}
+      </mat-option>
 
-<div mat-dialog-actions align="end">
-  <button mat-button (click)="cancel()">Cancel</button>
-  <button mat-flat-button color="primary" (click)="save()">Save</button>
+    </mat-select>
+  </mat-form-field>
+
+
+  <div mat-dialog-actions align="end">
+    <button mat-button (click)="cancel()">Cancel</button>
+    <button mat-flat-button color="primary" (click)="save()">Save</button>
+  </div>
+
 </div>

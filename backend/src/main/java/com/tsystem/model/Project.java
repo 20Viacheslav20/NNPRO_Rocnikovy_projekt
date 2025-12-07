@@ -38,7 +38,7 @@ public class Project {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "owner_id", nullable = false)
-    private User user; // владелец
+    private User user; // owner
 
     // связь в обратную сторону, чтобы при удалении проекта удалялись тикеты
     @OneToMany(mappedBy = "project", cascade = CascadeType.REMOVE, orphanRemoval = true)

@@ -1,15 +1,11 @@
 import { Component, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
+import { MaterialModules } from '../../../material.module'
 import { Ticket, TicketRequest } from '../ticket.models';
-import { TicketTypePipe } from '../../../shared/pipes/ticketType.pipe';
-import { TicketStatePipe } from '../../../shared/pipes/ticketState.pipe';
-import { TicketPriorityPipe } from '../../../shared/pipes/ticketPriority.pipe';
+import { User } from '../../../shared/models/user.model'
+import { UserService } from '../../../core/services/user.service'
 
 type DialogMode = 'create' | 'edit';
 
@@ -22,8 +18,7 @@ interface DialogData {
     selector: 'app-ticket-dialog',
     standalone: true,
     imports: [
-        CommonModule, MatDialogModule, ReactiveFormsModule,
-        MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule,
+        CommonModule, ReactiveFormsModule, MaterialModules
     ],
     templateUrl: './ticket-dialog.component.html',
     styleUrls: ['./ticket-dialog.component.scss']
@@ -32,19 +27,26 @@ export class TicketDialogComponent {
 
     form: FormGroup;
     mode: DialogMode = 'create';
+    users: User[] = [];
 
     constructor(
         private fb: FormBuilder,
+        private userService: UserService,
         private ref: MatDialogRef<TicketDialogComponent>,
         @Inject(MAT_DIALOG_DATA) public data: DialogData
     ) {
         this.mode = data.mode;
         this.form = this.fb.group({
             name: [data.ticket?.name ?? '', [Validators.required]],
+            description: [data.ticket?.description ?? '', [Validators.required]],
             type: [data.ticket?.type ?? 'bug', [Validators.required]],
             priority: [data.ticket?.priority ?? 'med', [Validators.required]],
             state: [data.ticket?.state ?? 'open'],
             assigneeId: [data.ticket?.assigneeId ?? null]
+        });
+
+        this.userService.getAll().subscribe(users => {
+            this.users = users;
         });
     }
 

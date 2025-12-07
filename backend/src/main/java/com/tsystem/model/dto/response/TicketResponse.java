@@ -19,4 +19,6 @@ public class TicketResponse {
     private TicketPriority priority;
     private TicketState state;
     private OffsetDateTime createdAt;
+    private UserShortResponse owner;
+    private UserShortResponse assignee;
 }

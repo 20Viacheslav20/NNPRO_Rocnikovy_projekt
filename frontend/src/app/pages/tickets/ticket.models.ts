@@ -5,6 +5,7 @@ export type TicketState = 'open' | 'in_progress' | 'done';
 export interface Ticket {
     id: string;
     name: string;
+    description: string;
     type: TicketType;
     priority: TicketPriority;
     state: TicketState;
@@ -15,6 +16,7 @@ export interface Ticket {
 
 export interface TicketRequest {
     name: string;
+    description: string;
     type: TicketType;
     priority: TicketPriority;
     state?: TicketState;

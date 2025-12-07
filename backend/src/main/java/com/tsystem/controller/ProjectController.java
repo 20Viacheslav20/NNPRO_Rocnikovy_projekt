@@ -20,12 +20,12 @@ import java.util.UUID;
 @RequestMapping("/api/projects")
 public class ProjectController {
 
-    private final ProjectService projects;
+    private final ProjectService projectService;
 
     // GET /projects
     @GetMapping
     public List<ProjectResponse> list(@AuthenticationPrincipal UserDetails principal) {
-        return projects.findAll()
+        return projectService.findAll()
                 .stream().map(ProjectMapper::toResponse).toList();
     }
 
@@ -34,13 +34,13 @@ public class ProjectController {
     @ResponseStatus(HttpStatus.CREATED)
     public ProjectResponse create(@Valid @RequestBody ProjectCreateRequest req,
                                   @AuthenticationPrincipal UserDetails principal) {
-        return ProjectMapper.toResponse(projects.create(req, principal.getUsername()));
+        return ProjectMapper.toResponse(projectService.create(req, principal.getUsername()));
     }
 
     // GET /projects/{projectId}
     @GetMapping("/{projectId}")
     public ProjectResponse get(@PathVariable UUID projectId) {
-        return ProjectMapper.toResponse(projects.findById(projectId));
+        return ProjectMapper.toResponse(projectService.findById(projectId));
     }
 
     // PUT /projects/{projectId}
@@ -48,7 +48,7 @@ public class ProjectController {
     public ProjectResponse update(@PathVariable UUID projectId,
                                   @Valid @RequestBody ProjectUpdateRequest req,
                                   @AuthenticationPrincipal UserDetails principal) {
-        return ProjectMapper.toResponse(projects.update(projectId, req, principal.getUsername()));
+        return ProjectMapper.toResponse(projectService.update(projectId, req, principal.getUsername()));
     }
 
     // DELETE /projects/{projectId}
@@ -56,6 +56,6 @@ public class ProjectController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID projectId,
                        @AuthenticationPrincipal UserDetails principal) {
-        projects.delete(projectId, principal.getUsername());
+        projectService.delete(projectId, principal.getUsername());
     }
 }

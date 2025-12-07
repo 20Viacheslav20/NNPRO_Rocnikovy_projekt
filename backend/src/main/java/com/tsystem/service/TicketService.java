@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.tsystem.exception.ForbiddenException;
@@ -23,24 +24,34 @@ import com.tsystem.exception.ForbiddenException;
 @RequiredArgsConstructor
 public class TicketService {
 
-    private final TicketRepository tickets;
-    private final ProjectRepository projects;
-    private final UserRepository users;
+    private final TicketRepository ticketRepository;
+    private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
 
+    // TODO нужо переделать
     private Project mustOwnProject(UUID projectId, String username) {
-        Project p = projects.findById(projectId).orElseThrow(NotFoundException::new);
+        Project p = projectRepository.findById(projectId).orElseThrow(NotFoundException::new);
         if (!p.getUser().getUsername().equals(username)) throw new ForbiddenException();
         return p;
     }
 
+    // TODO нужо переделать
     private User me(String username) {
-        return users.findByUsername(username).orElseThrow(NotFoundException::new);
+        return userRepository.findByUsername(username).orElseThrow(NotFoundException::new);
     }
 
     @Transactional
     public Ticket create(UUID projectId, TicketCreateRequest req, String username) {
         Project p = mustOwnProject(projectId, username);
         User author = me(username);
+
+        User assignee = null;
+
+        if (req.getAssigneeId() != null) {
+            assignee = userRepository.findById(req.getAssigneeId())
+                    .orElse(null);
+        }
+
         Ticket t = Ticket.builder()
                 .name(req.getName())
                 .description(req.getDescription())
@@ -48,20 +59,22 @@ public class TicketService {
                 .priority(req.getPriority())
                 .project(p)
                 .user(author)
+                .assignee(assignee)
                 .build();
-        return tickets.save(t);
+
+        return ticketRepository.save(t);
     }
 
     @Transactional(readOnly = true)
     public List<Ticket> list(UUID projectId, String username) {
         Project p = mustOwnProject(projectId, username);
-        return tickets.findByProjectIdOrderByCreatedAtDesc(p.getId());
+        return ticketRepository.findByProjectIdOrderByCreatedAtDesc(p.getId());
     }
 
     @Transactional(readOnly = true)
     public Ticket get(UUID projectId, UUID ticketId, String username) {
         Project p = mustOwnProject(projectId, username);
-        return tickets.findByIdAndProjectId(ticketId, p.getId()).orElseThrow(NotFoundException::new);
+        return ticketRepository.findByIdAndProjectId(ticketId, p.getId()).orElseThrow(NotFoundException::new);
     }
 
     @Transactional
@@ -72,12 +85,12 @@ public class TicketService {
         t.setType(req.getType());
         t.setPriority(req.getPriority());
         t.setState(req.getState());
-        return tickets.save(t);
+        return ticketRepository.save(t);
     }
 
     @Transactional
     public void delete(UUID projectId, UUID ticketId, String username) {
         Ticket t = get(projectId, ticketId, username);
-        tickets.delete(t);
+        ticketRepository.delete(t);
     }
 }

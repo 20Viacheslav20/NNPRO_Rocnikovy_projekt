@@ -5,6 +5,8 @@ import com.tsystem.model.enums.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,4 +24,6 @@ public class TicketCreateRequest {
 
     @Size(max = 10000)
     private String description;
+
+    private UUID assigneeId;
 }

@@ -3,6 +3,8 @@ package com.tsystem.model.mapper;
 
 import com.tsystem.model.Ticket;
 import com.tsystem.model.dto.response.TicketResponse;
+import com.tsystem.model.dto.response.UserShortResponse;
+import com.tsystem.model.user.User;
 
 public final class TicketMapper {
     private TicketMapper(){}
@@ -16,6 +18,17 @@ public final class TicketMapper {
                 .priority(t.getPriority())
                 .state(t.getState())
                 .createdAt(t.getCreatedAt())
+                .owner(toUserResponse(t.getUser()))
+                .assignee(t.getAssignee() != null ? toUserResponse(t.getAssignee()) : null)
+                .build();
+    }
+
+    private static UserShortResponse toUserResponse(User u) {
+        return UserShortResponse.builder()
+                .id(u.getId())
+                .username(u.getUsername())
+                .name(u.getName())
+                .surname(u.getSurname())
                 .build();
     }
 
