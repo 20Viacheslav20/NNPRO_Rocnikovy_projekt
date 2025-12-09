@@ -93,11 +93,9 @@ export class ProjectsPageComponent implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.snack.open(
-          typeof err === 'string' ? err : (this.extractMessage(err) ?? 'Failed'),
-          'Close',
-          { duration: 3000 }
-        );
+        const msg = this.extractMessage(err) ?? 'Unknown error';
+
+        this.snack.open(msg, 'Close', { duration: 3000 });
       }
     });
   }
@@ -153,9 +151,24 @@ export class ProjectsPageComponent implements OnInit {
   }
 
   private extractMessage(err: any): string | undefined {
-    if (typeof err?.error === 'string') return err.error;
-    if (typeof err?.error?.error === 'string') return err.error.error;
-    if (typeof err?.error?.message === 'string') return err.error.message;
+
+    if (typeof err?.error === 'string') {
+      return err.error;
+    }
+
+    if (typeof err?.error?.error === 'string') {
+      return err.error.error;
+    }
+
+    if (typeof err?.error?.message === 'string') {
+      return err.error.message;
+    }
+
+    if (typeof err?.message === 'string') {
+      return err.message;
+    }
+
     return undefined;
   }
+
 }

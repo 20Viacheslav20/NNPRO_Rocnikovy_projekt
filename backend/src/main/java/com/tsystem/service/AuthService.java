@@ -4,10 +4,12 @@ package com.tsystem.service;
 import com.tsystem.model.dto.request.LoginRequest;
 import com.tsystem.model.dto.request.RegisterRequest;
 import com.tsystem.model.dto.response.TokenResponse;
+import com.tsystem.model.user.PasswordResetToken;
 import com.tsystem.model.user.SystemRole;
 import com.tsystem.model.user.User;
 
 import com.tsystem.model.dto.*;
+import com.tsystem.repository.PasswordResetTokenRepository;
 import com.tsystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
@@ -29,6 +32,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
@@ -40,10 +44,10 @@ public class AuthService {
         var user = User.builder()
                 .username(request.getEmail())
                 .email(request.getEmail())
-                .name(request.getName())         // важно, если NOT NULL
-                .surname(request.getSurname())   // важно, если NOT NULL
+                .name(request.getName())
+                .surname(request.getSurname())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(SystemRole.SYSTEM_USER)
+                .role(SystemRole.ADMIN)
                 .build();
 
         userRepository.save(user);
@@ -63,8 +67,6 @@ public class AuthService {
                 .orElseGet(() -> userRepository.findByEmail(request.getLogin())
                         .orElseThrow(() -> new IllegalArgumentException("Invalid credentials")));
 
-        // проверка пароля и создание SecurityContext — через AuthenticationManager
-        //
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getUsername(), request.getPassword())
         );
@@ -76,78 +78,100 @@ public class AuthService {
     /**
      * Password reset request (login = username/email). Always 204, no reveal.
      */
+    @Transactional
     public void requestPasswordReset(RequestPasswordReset req) {
+
         Optional<User> opt = userRepository.findByUsername(req.getLogin())
                 .or(() -> userRepository.findByEmail(req.getLogin()));
 
-        opt.ifPresent(u -> {
+        opt.ifPresent(user -> {
+
             UUID tokenId = UUID.randomUUID();
-            String code = generateNumericCode(8);                 // 8 цифр
-            String codeHash = passwordEncoder.encode(code);       // в БД хэш
+            String code = generateNumericCode(8);
+            String codeHash = passwordEncoder.encode(code);
 
-            u.setResetTokenId(tokenId);
-            u.setResetCode(codeHash);
-            u.setResetCodeExp(OffsetDateTime.now().plusMinutes(10)); // TTL 10 мин
+            PasswordResetToken resetToken = PasswordResetToken.builder()
+                    .id(tokenId)
+                    .user(user)
+                    .token(codeHash)
+                    .expiresAt(OffsetDateTime.now().plusMinutes(10))
+                    .build();
 
-            userRepository.save(u);
+            passwordResetTokenRepository.save(resetToken);
 
-            // In DEV, it's convenient to log the full token (uuid.code). In production, send it by email.
-            System.out.println("DEV reset token for " + u.getUsername() + " -> " + tokenId + "." + code);
+            System.out.println(
+                    "DEV reset token for " + user.getUsername()
+                            + " -> " + tokenId + "." + code
+            );
         });
-
     }
+
 
     /**
      * Password reset by token (<uuid>.<code>)
      */
+    @Transactional
     public void resetPassword(ResetPassword req) {
+
+        // Parse incoming token in the format: {uuid}.{code}
         String[] parts = req.getCode().split("\\.", 2);
         if (parts.length != 2) {
-            throw new IllegalArgumentException("invalid reset token");
+            throw new IllegalArgumentException("invalid reset token format");
         }
+
         UUID tokenId = UUID.fromString(parts[0]);
         String code = parts[1];
 
-        User u = userRepository.findByResetTokenId(tokenId)
+        // Load reset token record from the database
+        PasswordResetToken token = passwordResetTokenRepository.findById(tokenId)
                 .orElseThrow(() -> new IllegalArgumentException("invalid reset token"));
 
-        if (u.getResetCodeExp() == null || OffsetDateTime.now().isAfter(u.getResetCodeExp())) {
-            throw new IllegalStateException("reset code expired");
+        // Verify expiration time
+        if (OffsetDateTime.now().isAfter(token.getExpiresAt())) {
+            // Remove expired token for safety
+            passwordResetTokenRepository.delete(token);
+            throw new IllegalStateException("reset token expired");
         }
-        if (u.getResetCode() == null || !passwordEncoder.matches(code, u.getResetCode())) {
+
+        // Verify provided code (matches bcrypt hash stored in DB)
+        if (!passwordEncoder.matches(code, token.getToken())) {
             throw new IllegalArgumentException("invalid reset code");
         }
 
-        u.setPassword(passwordEncoder.encode(req.getNewPassword()));
-        u.setPasswordChangedAt(OffsetDateTime.now());
+        // Update user password
+        User user = token.getUser();
+        user.setPassword(passwordEncoder.encode(req.getNewPassword()));
+        user.setPasswordChangedAt(OffsetDateTime.now());
+        userRepository.save(user);
 
-        // invalidate the one-time token
-        u.setResetTokenId(null);
-        u.setResetCode(null);
-        u.setResetCodeExp(null);
-
-        userRepository.save(u);
+        // Remove used token (one-time token)
+        passwordResetTokenRepository.delete(token);
     }
 
-    /** 3) Change the password for the authorized user (check the old one, set a new one) */
+
+    /** Change the password for the authorized user (check the old one, set a new one) */
+    @Transactional
     public void changePassword(ChangePassword req, String currentUsername) {
+
+        // Load the currently authenticated user
         User me = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new IllegalArgumentException("user not found"));
 
+        // Validate old password
         if (!passwordEncoder.matches(req.getOldPassword(), me.getPassword())) {
             throw new IllegalArgumentException("old password mismatch");
         }
 
+        // Update password
         me.setPassword(passwordEncoder.encode(req.getNewPassword()));
         me.setPasswordChangedAt(OffsetDateTime.now());
-
-        // at the same time, we invalidate the potential active reset token
-        me.setResetTokenId(null);
-        me.setResetCode(null);
-        me.setResetCodeExp(null);
-
         userRepository.save(me);
+
+        // Invalidate all existing password reset tokens for this user
+        // (for security: changing password should disable all active reset tokens)
+        passwordResetTokenRepository.deleteAllByUserId(me.getId());
     }
+
 
     private static String generateNumericCode(int len) {
         SecureRandom rnd = new SecureRandom();

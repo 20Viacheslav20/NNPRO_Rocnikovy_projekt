@@ -25,20 +25,12 @@ public class ApplicationConfiguration {
     /** Достаём пользователя по username ИЛИ email */
     @Bean
     public UserDetailsService userDetailsService() {
-        return usernameOrEmail -> userRepository.findByUsername(usernameOrEmail)
-                .<UserDetails>map(u -> User
-                        .withUsername(u.getUsername())
-                        .password(u.getPassword())
-                        .authorities("USER")
-                        .accountLocked(false).disabled(false).build())
-                .orElseGet(() -> userRepository.findByEmail(usernameOrEmail)
-                        .<UserDetails>map(u -> User
-                                .withUsername(u.getUsername())
-                                .password(u.getPassword())
-                                .authorities("USER")
-                                .accountLocked(false).disabled(false).build())
-                        .orElseThrow(() -> new UsernameNotFoundException("User not found")));
+        return usernameOrEmail -> userRepository
+                .findByUsername(usernameOrEmail)
+                .or(() -> userRepository.findByEmail(usernameOrEmail))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
+
 
     @Bean public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 

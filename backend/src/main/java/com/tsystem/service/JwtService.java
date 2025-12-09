@@ -43,22 +43,28 @@ public class JwtService {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        // to check if userDetails is instance of User
+
         if (!(userDetails instanceof User)) {
             throw new IllegalArgumentException("UserDetails must be instance of User");
         }
+
         User user = (User) userDetails;
-        // check if userId is not null
-        if (user.getId() == null) {
-            throw new IllegalArgumentException("User ID cannot be null");
-        }
+
         claims.put("userId", user.getId());
         claims.put("name", user.getName());
         claims.put("surname", user.getSurname());
 
-        System.out.println("Generating token with claims: " + claims); // Логирование
+        // Add roles and permissions to JWT
+        claims.put("role", user.getRole().name());
+        claims.put("permissions",
+                user.getAuthorities().stream()
+                        .map(a -> a.getAuthority())
+                        .toList()
+        );
+
         return generateToken(claims, userDetails);
     }
+
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return Jwts.builder()

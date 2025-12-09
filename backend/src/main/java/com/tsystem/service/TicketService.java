@@ -3,6 +3,7 @@ package com.tsystem.service;
 import com.tsystem.exception.NotFoundException;
 import com.tsystem.model.Project;
 import com.tsystem.model.Ticket;
+import com.tsystem.model.user.SystemRole;
 import com.tsystem.model.user.User;
 
 import com.tsystem.model.dto.request.TicketCreateRequest;
@@ -11,11 +12,11 @@ import com.tsystem.repository.ProjectRepository;
 import com.tsystem.repository.TicketRepository;
 import com.tsystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import com.tsystem.exception.ForbiddenException;
@@ -28,22 +29,13 @@ public class TicketService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
 
-    // TODO нужо переделать
-    private Project mustOwnProject(UUID projectId, String username) {
-        Project p = projectRepository.findById(projectId).orElseThrow(NotFoundException::new);
-        if (!p.getUser().getUsername().equals(username)) throw new ForbiddenException();
-        return p;
-    }
-
-    // TODO нужо переделать
-    private User me(String username) {
-        return userRepository.findByUsername(username).orElseThrow(NotFoundException::new);
-    }
-
     @Transactional
     public Ticket create(UUID projectId, TicketCreateRequest req, String username) {
-        Project p = mustOwnProject(projectId, username);
-        User author = me(username);
+
+        Project p = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+
+        User author = getUserByUsername(username);
 
         User assignee = null;
 
@@ -58,7 +50,7 @@ public class TicketService {
                 .type(req.getType())
                 .priority(req.getPriority())
                 .project(p)
-                .user(author)
+                .author(author)
                 .assignee(assignee)
                 .build();
 
@@ -66,20 +58,51 @@ public class TicketService {
     }
 
     @Transactional(readOnly = true)
-    public List<Ticket> list(UUID projectId, String username) {
-        Project p = mustOwnProject(projectId, username);
+    public List<Ticket> findByAssignee(UUID assigneeId) {
+        // Validate user first
+        userRepository.findById(assigneeId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        return ticketRepository.findByAssigneeId(assigneeId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Ticket> getAllByProjectId(UUID projectId) {
+
+        Project p = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+
         return ticketRepository.findByProjectIdOrderByCreatedAtDesc(p.getId());
     }
 
     @Transactional(readOnly = true)
     public Ticket get(UUID projectId, UUID ticketId, String username) {
-        Project p = mustOwnProject(projectId, username);
-        return ticketRepository.findByIdAndProjectId(ticketId, p.getId()).orElseThrow(NotFoundException::new);
+        Ticket t = ticketRepository.findByIdAndProjectId(ticketId, projectId)
+                .orElseThrow(() -> new NotFoundException("Ticket not found"));
+
+        User current = userRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        // ADMIN -> always allowed
+        if (current.getRole() == SystemRole.ADMIN) return t;
+
+        // PROJECT_MANAGER -> always allowed
+        if (current.getRole() == SystemRole.PROJECT_MANAGER) return t;
+
+        // USER -> only if assigned
+        if (current.getRole() == SystemRole.USER) {
+            if (t.getAssignee() == null || !t.getAssignee().getId().equals(current.getId())) {
+                throw new AccessDeniedException("You cannot view this ticket");
+            }
+            return t;
+        }
+
+        throw new AccessDeniedException("Access denied");
     }
 
     @Transactional
-    public Ticket update(UUID projectId, UUID ticketId, TicketUpdateRequest req, String username) {
-        Ticket t = get(projectId, ticketId, username);
+    public Ticket update(UUID projectId, UUID ticketId, TicketUpdateRequest req) {
+        Ticket t = getTicket(projectId, ticketId);
         t.setName(req.getName());
         t.setDescription(req.getDescription());
         t.setType(req.getType());
@@ -89,8 +112,16 @@ public class TicketService {
     }
 
     @Transactional
-    public void delete(UUID projectId, UUID ticketId, String username) {
-        Ticket t = get(projectId, ticketId, username);
+    public void delete(UUID projectId, UUID ticketId) {
+        Ticket t = getTicket(projectId, ticketId);
         ticketRepository.delete(t);
+    }
+
+    private User getUserByUsername(String username) {
+        return userRepository.findByUsername(username).orElseThrow(NotFoundException::new);
+    }
+
+    private Ticket getTicket(UUID projectId, UUID ticketId){
+        return ticketRepository.findByIdAndProjectId(ticketId, projectId).orElseThrow(NotFoundException::new);
     }
 }

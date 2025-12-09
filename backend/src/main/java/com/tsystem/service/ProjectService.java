@@ -15,25 +15,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
-import com.tsystem.exception.ForbiddenException;
-
 @Service
 @RequiredArgsConstructor
 public class ProjectService {
 
-    private final ProjectRepository projects;
-    private final UserRepository users;
-
-    // TODO нужно переделать
-    private Project mustOwnProject(UUID projectId, String username) {
-        Project p = projects.findById(projectId).orElseThrow(NotFoundException::new);
-        if (!p.getUser().getUsername().equals(username)) throw new ForbiddenException();
-        return p;
-    }
+    private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public Project create(ProjectCreateRequest req, String username) {
-        User owner = users.findByEmail(username)
+        User owner = userRepository.findByEmail(username)
                 .orElseThrow(NotFoundException::new);
 
         Project p = Project.builder()
@@ -41,31 +32,33 @@ public class ProjectService {
                 .description(req.getDescription())
                 .user(owner)
                 .build();
-        return projects.save(p);
+        return projectRepository.save(p);
     }
 
     @Transactional(readOnly = true)
     public List<Project> findAll() {
-        return projects.findAll();
+        return projectRepository.findAll();
     }
 
     @Transactional(readOnly = true)
     public Project findById(UUID uuid) {
-        return projects.findById(uuid).orElseThrow(NotFoundException::new);
+        return projectRepository.findById(uuid).orElseThrow(NotFoundException::new);
     }
 
     @Transactional
-    public Project update(UUID projectId, ProjectUpdateRequest req, String username) {
-        Project p = mustOwnProject(projectId, username);
+    public Project update(UUID projectId, ProjectUpdateRequest req) {
+
+        Project p = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+
         p.setName(req.getName());
         p.setDescription(req.getDescription());
         p.setStatus(req.getStatus());
-        return projects.save(p);
+        return projectRepository.save(p);
     }
 
     @Transactional
-    public void delete(UUID projectId, String username) {
-        Project p = mustOwnProject(projectId, username);
-        projects.delete(p);
+    public void delete(UUID projectId) {
+        projectRepository.deleteById(projectId);
     }
 }

@@ -9,26 +9,43 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.tsystem.model.user.SystemPermission.getAdminPermissions;
-import static com.tsystem.model.user.SystemPermission.getUserPermissions;
-
 @RequiredArgsConstructor
 public enum SystemRole {
 
-    //system level roles
-    SYSTEM_USER(getUserPermissions()),
-    SYSTEM_ADMIN(getAdminPermissions()),
-    SYSTEM_RESEARCHER(getUserPermissions());
+    // System-level administrator (full access)
+    ADMIN(SystemPermission.all()),
+
+    // Project manager (has full access inside projects he manages)
+    PROJECT_MANAGER(Set.of(
+            SystemPermission.TICKET_CREATE,
+            SystemPermission.TICKET_READ_ALL,
+            SystemPermission.TICKET_UPDATE,
+            SystemPermission.TICKET_DELETE,
+            SystemPermission.PROJECT_READ_ALL,
+            SystemPermission.PROJECT_CREATE,
+            SystemPermission.PROJECT_UPDATE,
+            SystemPermission.PROJECT_DELETE
+    )),
+
+    // Regular user (worker)
+    USER(Set.of(
+            SystemPermission.TICKET_READ_ASSIGNED,
+            SystemPermission.TICKET_UPDATE_ASSIGNED,
+            SystemPermission.USER_UPDATE_SELF
+    ));
 
     @Getter
     private final Set<SystemPermission> permissions;
 
     public List<SimpleGrantedAuthority> getAuthorities() {
-        var authorities = getPermissions()
-                .stream()
-                .map(permission -> new SimpleGrantedAuthority(permission.getPermission()))
+        // Map permissions to Spring Security authorities
+        List<SimpleGrantedAuthority> authorities = permissions.stream()
+                .map(p -> new SimpleGrantedAuthority(p.getPermission()))
                 .collect(Collectors.toList());
-        authorities.add(new SimpleGrantedAuthority(this.name()));
+
+        // Add role itself as authority (ROLE_ prefix required for Spring)
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + this.name()));
+
         return authorities;
     }
 }

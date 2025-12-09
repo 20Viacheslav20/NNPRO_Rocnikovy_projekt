@@ -1,5 +1,6 @@
 package com.tsystem.model.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,17 +32,9 @@ public class User implements UserDetails {
     @Column(nullable = false, length = 120)
     private String surname;
 
+    @JsonIgnore
     @Column(name = "password_hash", nullable = false, columnDefinition = "TEXT")
     private String password;
-
-    @Column(name = "reset_code", length = 64)
-    private String resetCode;
-
-    @Column(name = "reset_code_exp")
-    private OffsetDateTime resetCodeExp;
-
-    @Column(name = "reset_token_id")
-    private UUID resetTokenId;
 
     @Column(name = "password_changed_at")
     private OffsetDateTime passwordChangedAt;
@@ -52,6 +45,7 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     private SystemRole role;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return role.getAuthorities();

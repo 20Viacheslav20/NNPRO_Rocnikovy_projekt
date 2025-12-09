@@ -9,48 +9,36 @@ import java.util.Set;
 
 @RequiredArgsConstructor
 public enum SystemPermission {
-    ADMIN_CREATE("admin:create"),
-    ADMIN_READ("admin:read"),
-    ADMIN_UPDATE("admin:update"),
-    ADMIN_DELETE("admin:delete"),
 
-    USER_CREATE("user:create"),
-    USER_READ("user:read"),
-    USER_UPDATE("user:update"),
-    USER_DELETE("user:delete");
+    // Ticket permissions
+    TICKET_CREATE("ticket:create"),
+    TICKET_READ_ALL("ticket:read_all"),
+    TICKET_READ_ASSIGNED("ticket:read_assigned"),
+    TICKET_UPDATE("ticket:update"),
+    TICKET_UPDATE_ASSIGNED("ticket:update_assigned"),
+    TICKET_DELETE("ticket:delete"),
 
+    // Project permissions
+    PROJECT_CREATE("project:create"),
+    PROJECT_READ_ALL("project:read_all"),
+    //PROJECT_READ_OWN("project:read_own"),
+    PROJECT_UPDATE("project:update"),
+    PROJECT_DELETE("project:delete"),
+
+    // User permissions
+    USER_READ_ALL("user:read_all"),
+    USER_UPDATE_SELF("user:update_self"),
+    USER_UPDATE_ROLE("user:update_role"),
+    USER_DELETE("user:delete"),
+
+    // System-level
+    SYSTEM_AUDIT_READ("system:audit_read"),
+    SYSTEM_ADMIN_ACTIONS("system:admin_actions");
 
     @Getter
     private final String permission;
 
-    public static Set<SystemPermission> getAllPermissions() {
-        return Set.of(SystemPermission.values());
+    public static Set<SystemPermission> all() {
+        return Set.of(values());
     }
-
-    public static Set<SystemPermission> getUserPermissions() {
-        Set<SystemPermission> permissions = new HashSet<>();
-
-        permissions.add(USER_CREATE);
-        permissions.add(USER_READ);
-        permissions.add(USER_UPDATE);
-        permissions.add(USER_DELETE);
-
-        return permissions;
-    }
-
-    public static Set<SystemPermission> getAdminPermissions() {
-//        Set<SystemPermission> permissions = new HashSet<>();
-//        permissions.add(P_CREATE);
-//        permissions.add(P_READ);
-//        permissions.add(P_UPDATE);
-//        permissions.add(P_DELETE);
-//
-//        permissions.add(P_ADD_USER);
-//        permissions.add(P_DELETE_USER);
-//        permissions.add(P_UPDATE_ROLE);
-
-        return getAllPermissions();
-    }
-
-
 }

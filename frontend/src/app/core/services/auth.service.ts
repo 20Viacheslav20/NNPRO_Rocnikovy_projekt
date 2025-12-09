@@ -37,6 +37,7 @@ export class AuthService {
   }
 
   login(login: string, password: string) {
+    this.logout();
     return this.http.post(
       `${this.baseURL}/login`,
       { login, password },
@@ -53,6 +54,7 @@ export class AuthService {
   }
 
   register(data: any) {
+    this.logout();
     return this.http.post(`${this.baseURL}/register`, data).pipe(
       map(() => true)
     );

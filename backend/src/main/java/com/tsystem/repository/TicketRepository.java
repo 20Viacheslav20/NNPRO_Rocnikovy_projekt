@@ -14,6 +14,10 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
     @EntityGraph(attributePaths = {"user", "assignee"})
     List<Ticket> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
 
+    @EntityGraph(attributePaths = {"user", "assignee"})
     Optional<Ticket> findByIdAndProjectId(UUID id, UUID projectId);
+
+    @EntityGraph(attributePaths = {"user", "assignee"})
+    List<Ticket> findByAssigneeId(UUID assigneeId);
 
 }

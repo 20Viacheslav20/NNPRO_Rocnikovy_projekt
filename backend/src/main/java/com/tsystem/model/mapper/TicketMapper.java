@@ -18,7 +18,7 @@ public final class TicketMapper {
                 .priority(t.getPriority())
                 .state(t.getState())
                 .createdAt(t.getCreatedAt())
-                .owner(toUserResponse(t.getUser()))
+                .owner(toUserResponse(t.getAuthor()))
                 .assignee(t.getAssignee() != null ? toUserResponse(t.getAssignee()) : null)
                 .build();
     }
