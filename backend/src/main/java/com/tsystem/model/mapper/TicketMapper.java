@@ -20,6 +20,7 @@ public final class TicketMapper {
                 .createdAt(t.getCreatedAt())
                 .owner(toUserResponse(t.getAuthor()))
                 .assignee(t.getAssignee() != null ? toUserResponse(t.getAssignee()) : null)
+                .projectId(t.getProject().getId())
                 .build();
     }
 

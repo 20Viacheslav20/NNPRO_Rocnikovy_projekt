@@ -1,48 +1,66 @@
-/* Back link */
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-  font-size: 14px;
-  color: #3f51b5;
-  margin-bottom: 16px;
-  padding: 4px 0;
-
-  mat-icon {
-    font-size: 18px;
-    height: 18px;
-    width: 18px;
-  }
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-/* Ticket card */
 .ticket-card {
-  margin-bottom: 20px;
+  max-width: 900px;
+  margin: 0 auto 24px;
+  padding-bottom: 8px;
+
+  mat-card-header {
+    padding-bottom: 8px;
+  }
 
   mat-card-title {
     font-size: 20px;
     font-weight: 600;
-    margin-bottom: 12px;
+  }
+
+  mat-card-subtitle {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.6);
   }
 }
 
-/* Info grid */
-.grid {
+/* Meta grid */
+.meta-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px 24px;
-  font-size: 15px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 32px;
+  margin-top: 16px;
 
-  div strong {
-    font-weight: 600;
+  >div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
   @media (max-width: 720px) {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Labels & values */
+.label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.value {
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+/* Description block */
+.description {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+  p {
+    margin-top: 8px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: rgba(0, 0, 0, 0.87);
+    white-space: pre-line;
   }
 }

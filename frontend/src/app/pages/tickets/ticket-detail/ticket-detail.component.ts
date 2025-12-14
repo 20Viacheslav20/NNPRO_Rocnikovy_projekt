@@ -42,18 +42,10 @@ export class TicketDetailComponent {
     }
 
     loadTicket(): void {
-        this.service.get(this.projectId, this.ticketId).subscribe(t => this.ticket = t);
-    }
-
-    getProjectId(): string {
-        const p = this.ticket?.project;
-        if (!p) return "";
-
-        if (typeof p === 'object' && 'id' in p) {
-            return p.id;
+        this.service.get(this.projectId, this.ticketId).subscribe(t => {
+            this.ticket = t;
         }
-
-        return p as string;
+        );
     }
 
 }

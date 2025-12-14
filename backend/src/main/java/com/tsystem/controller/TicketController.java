@@ -32,16 +32,6 @@ public class TicketController {
                 .stream().map(TicketMapper::toResponse).toList();
     }
 
-    @GetMapping("/assignee/{userId}")
-    @PreAuthorize("hasAuthority('ticket:read_assigned') or hasRole('PROJECT_MANAGER') or hasRole('ADMIN')")
-    public List<TicketResponse> getByAssignee(@PathVariable UUID userId) {
-
-        return ticketService.findByAssignee(userId)
-                .stream()
-                .map(TicketMapper::toResponse)
-                .toList();
-    }
-
     // POST /projects/{projectId}/tickets
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

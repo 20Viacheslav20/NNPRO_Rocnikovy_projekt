@@ -10,8 +10,11 @@ export interface Ticket {
     priority: TicketPriority;
     state: TicketState;
     createdAt: string;
-    project: { id: string } | string;
+    projectId?: string;
     assigneeId?: number | null;
+
+    assignee?: UserShort;
+    owner?: UserShort;
 }
 
 export interface TicketRequest {
@@ -21,4 +24,11 @@ export interface TicketRequest {
     priority: TicketPriority;
     state?: TicketState;
     assigneeId?: number | null;
+}
+
+export interface UserShort {
+    id: string;
+    username: string;
+    name: string;
+    surname: string;
 }

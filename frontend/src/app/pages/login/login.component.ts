@@ -19,9 +19,13 @@ export class LoginComponent {
 
   constructor(private auth: AuthService, private router: Router) { }
 
-  onLogin() {
+  onLogin(): void {
     this.auth.login(this.email, this.password).subscribe({
-      next: () => this.router.navigateByUrl('/projects'),
+      next: () => {
+        const role = this.auth.getUserRole();
+        const route = this.auth.getDefaultRouteByRole(role);
+        this.router.navigateByUrl(route);
+      },
       error: err => this.error = err
     });
   }

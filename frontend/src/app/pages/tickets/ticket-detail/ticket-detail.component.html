@@ -3,15 +3,56 @@
 </a>
 
 <mat-card *ngIf="ticket" class="ticket-card">
-  <mat-card-title>Ticket #{{ ticket.id }} — {{ ticket.name }}</mat-card-title>
+
+  <mat-card-header>
+    <mat-card-title>
+      Ticket #{{ ticket.id }}
+    </mat-card-title>
+    <mat-card-subtitle>
+      {{ ticket.name }}
+    </mat-card-subtitle>
+  </mat-card-header>
+
   <mat-card-content>
-    <div class="grid">
-      <div><strong>Type:</strong> {{ ticket.type | ticketType }}</div>
-      <div><strong>Priority:</strong> {{ ticket.priority | ticketPriority }}</div>
-      <div><strong>State:</strong> {{ ticket.state | ticketState }}</div>
-      <div><strong>Updated:</strong> {{ ticket.createdAt | dateTime }}</div>
-      <div><strong>Assignee:</strong> {{ ticket.assigneeId ?? '-' }}</div>
-      <div><strong>Project:</strong> {{ getProjectId() }}</div>
+
+    <!-- Meta info -->
+    <div class="meta-grid">
+      <div>
+        <span class="label">Type</span>
+        <span class="value">{{ ticket.type | ticketType }}</span>
+      </div>
+
+      <div>
+        <span class="label">Priority</span>
+        <span class="value">{{ ticket.priority | ticketPriority }}</span>
+      </div>
+
+      <div>
+        <span class="label">State</span>
+        <span class="value">{{ ticket.state | ticketState }}</span>
+      </div>
+
+      <div>
+        <span class="label">Created</span>
+        <span class="value">{{ ticket.createdAt | dateTime }}</span>
+      </div>
+
+      <div>
+        <span class="label">Assignee</span>
+        <span class="value">
+          {{ ticket?.assignee?.name || '—' }}
+        </span>
+      </div>
     </div>
+
+    <!-- Description -->
+    <div class="description">
+      <div class="label">Description</div>
+      <p>
+        {{ ticket.description || 'No description provided' }}
+      </p>
+    </div>
+
   </mat-card-content>
+
 </mat-card>

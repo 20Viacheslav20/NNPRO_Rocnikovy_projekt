@@ -21,4 +21,5 @@ public class TicketResponse {
     private OffsetDateTime createdAt;
     private UserShortResponse owner;
     private UserShortResponse assignee;
+    private UUID projectId;
 }

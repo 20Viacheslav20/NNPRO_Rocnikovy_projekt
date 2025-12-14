@@ -10,6 +10,7 @@ export interface CurrentUser {
   name: string;
   surname: string;
   email: string;
+  role: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -77,14 +78,30 @@ export class AuthService {
     return this.user$.value;
   }
 
+  isAuthenticated(): boolean {
+    return !!localStorage.getItem('token');
+  }
+
+  getDefaultRouteByRole(role: string): string {
+    if (role === 'USER') {
+      return '/tickets';
+    }
+    return '/projects';
+  }
+
+  getUserRole(): string {
+    return this.currentUser()?.role ?? '';
+  }
+
   private decodeUserFromToken(token: string): CurrentUser {
     const decoded: any = jwtDecode(token);
 
     return {
-      userId: decoded.id,
+      userId: decoded.userId,
       name: decoded.name,
       surname: decoded.surname,
-      email: decoded.sub
+      email: decoded.sub,
+      role: decoded.role
     };
   }
 }

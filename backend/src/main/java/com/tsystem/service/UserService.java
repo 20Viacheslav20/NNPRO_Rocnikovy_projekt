@@ -1,11 +1,14 @@
 package com.tsystem.service;
 
 import com.tsystem.exception.NotFoundException;
+import com.tsystem.model.dto.request.UserRequest;
+import com.tsystem.model.user.SystemRole;
 import com.tsystem.model.user.User;
 import com.tsystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -13,6 +16,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -20,39 +24,60 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User save(User user) {
-        return userRepository.save(user);
-    }
-
     public User findById(UUID id) {
-        return userRepository.findById(id).orElse(null);
-    }
-
-    public User findByUsername(String username) {
-        return userRepository.findByUsername(username).orElse(null);
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found."));
     }
 
     public User findByEmail(String email) {
-        return userRepository.findByEmail(email).orElse(null);
-    }
-    public User updateAuthUser(UUID userId, User authUser) {
-        User existingUser = userRepository.findById(userId).orElseThrow();
-        existingUser.setUsername(authUser.getUsername());
-        existingUser.setEmail(authUser.getEmail());
-        existingUser.setPassword(passwordEncoder.encode(authUser.getPassword()));
-        existingUser.setRole(authUser.getRole());
-//        existingUser.setActive(authUser.isActive());
-        return userRepository.save(existingUser);
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found."));
     }
 
-    public User deleteUser(UUID id) {
-
-        User deleted = userRepository.findById(id).orElseThrow(()->new NotFoundException("User not found."));
-        userRepository.deleteById(id);
-        return deleted;
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("User not found."));
     }
 
+    @Transactional
+    public User create(UserRequest req) {
+        User user = User.builder()
+                .email(req.getEmail())
+                .username(req.getEmail()) // username = email
+                .name(req.getName())
+                .surname(req.getSurname())
+                .role(SystemRole.valueOf(req.getRole()))
+                .password(passwordEncoder.encode(req.getPassword()))
+                .build();
 
+        return userRepository.save(user);
+    }
 
+    @Transactional
+    public User update(UUID id, UserRequest req) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found."));
 
+        user.setEmail(req.getEmail());
+        user.setUsername(req.getEmail()); // keep consistent
+        user.setName(req.getName());
+        user.setSurname(req.getSurname());
+        user.setRole(SystemRole.valueOf(req.getRole()));
+
+        // Optional password change
+        if (req.getPassword() != null && !req.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(req.getPassword()));
+        }
+
+        return userRepository.save(user);
+    }
+
+    // DELETE /users/{id}
+    @Transactional
+    public void delete(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found."));
+
+        userRepository.delete(user);
+    }
 }

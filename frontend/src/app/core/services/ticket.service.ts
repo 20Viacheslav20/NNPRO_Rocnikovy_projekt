@@ -19,6 +19,13 @@ export class TicketService {
         return this.http.get<Ticket>(`${this.base}/projects/${projectId}/tickets/${ticketId}`);
     }
 
+
+    getByAssignee(userId: string) {
+        return this.http.get<Ticket[]>(
+            `${environment.apiUrl}/tickets/assignee/${userId}`
+        );
+    }
+
     create(projectId: string, body: TicketRequest): Observable<Ticket> {
         return this.http.post<Ticket>(`${this.base}/projects/${projectId}/tickets`, body);
     }

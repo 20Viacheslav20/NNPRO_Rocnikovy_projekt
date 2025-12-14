@@ -11,6 +11,7 @@ import { TicketPriorityPipe } from '../../../shared/pipes/ticketPriority.pipe';
 import { TicketStatePipe } from '../../../shared/pipes/ticketState.pipe';
 import { TicketDialogComponent } from '../ticket-dialog/ticket-dialog.component';
 import { MaterialModules } from '../../../material.module'
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'app-tickets-page',
@@ -40,17 +41,36 @@ export class TicketsPageComponent {
         private route: ActivatedRoute,
         private router: Router,
         private service: TicketService,
-        private dialog: MatDialog
+        private dialog: MatDialog,
+        private authService: AuthService
     ) {
         this.route.paramMap.subscribe((p: ParamMap) => {
             this.projectId = p.get('projectId')!;
-            this.load();
+            debugger
+            if (this.projectId) {
+                this.load();
+            } else {
+                this.loadMyTickets();
+            }
         });
     }
 
-    load(): void {
+    private loadMyTickets(): void {
+        const userId = this.authService.currentUser()?.userId;
+
+        if (!userId) {
+            return;
+        }
+
+        this.service.getByAssignee(userId)
+            .subscribe({
+                next: (items) => { this.data = items; }
+            });
+    }
+
+    private load(): void {
         this.service.list(this.projectId).subscribe({
-            next: (items) => { this.data = items; console.log(items) }
+            next: (items) => { this.data = items; }
         });
     }
 
@@ -105,7 +125,12 @@ export class TicketsPageComponent {
 
 
     view(row: Ticket): void {
-        this.router.navigate(['/projects', this.projectId, 'tickets', row.id]);
+        if (this.projectId) {
+            this.router.navigate(['/projects', this.projectId, 'tickets', row.id]);
+        } else {
+            this.router.navigate(['/projects', row.projectId, 'tickets', row.id]);
+        }
+
     }
 
     remove(row: Ticket): void {

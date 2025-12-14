@@ -11,13 +11,13 @@ import java.util.UUID;
 
 public interface TicketRepository extends JpaRepository<Ticket, UUID> {
 
-    @EntityGraph(attributePaths = {"user", "assignee"})
+    @EntityGraph(attributePaths = {"author", "assignee"})
     List<Ticket> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
 
-    @EntityGraph(attributePaths = {"user", "assignee"})
+    @EntityGraph(attributePaths = {"author", "assignee"})
     Optional<Ticket> findByIdAndProjectId(UUID id, UUID projectId);
 
-    @EntityGraph(attributePaths = {"user", "assignee"})
+    @EntityGraph(attributePaths = {"author", "assignee"})
     List<Ticket> findByAssigneeId(UUID assigneeId);
 
 }
