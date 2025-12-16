@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MaterialModules } from './material.module';
 import { AuthService, CurrentUser } from './core/services/auth.service'
@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, ...MaterialModules],
+  imports: [CommonModule, RouterOutlet, ...MaterialModules, RouterLink],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
@@ -42,5 +42,14 @@ export class AppComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  canShowAdminButton(): boolean {
+    return this.authService.getUserRole() !== 'USER';
+  }
+
+  /** переход на нужную страницу */
+  goToAdminPage(): void {
+    this.router.navigate(['/users']);
   }
 }

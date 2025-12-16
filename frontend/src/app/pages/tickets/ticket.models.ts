@@ -13,7 +13,7 @@ export interface Ticket {
     projectId?: string;
     assigneeId?: number | null;
 
-    assignee?: UserShort;
+    assignee?: UserShort | null;
     owner?: UserShort;
 }
 

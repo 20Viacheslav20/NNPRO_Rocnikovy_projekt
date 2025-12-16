@@ -1,7 +1,14 @@
 <mat-toolbar class="custom-toolbar">
 
-  <span class="title">Tickets portal</span>
+  <a mat-button class="title-link" routerLink="/projects">
+    Tickets portal
+  </a>
   <span class="spacer"></span>
+
+  <button mat-button *ngIf="isLoggedIn() && canShowAdminButton()" (click)="goToAdminPage()">
+    <mat-icon>admin_panel_settings</mat-icon>
+    Users
+  </button>
 
   <!-- User profile button -->
   <button mat-button [matMenuTriggerFor]="userMenu" class="user-button" *ngIf="isLoggedIn()">

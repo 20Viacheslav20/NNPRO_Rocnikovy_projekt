@@ -47,3 +47,16 @@
   font-size: 14px;
   color: white;
 }
+
+.title-link {
+  color: inherit !important;
+  text-transform: none;
+  font-size: 24px;
+}
+
+.title-link:hover,
+.title-link:active,
+.title-link:focus,
+.title-link:visited {
+  color: inherit !important;
+}
