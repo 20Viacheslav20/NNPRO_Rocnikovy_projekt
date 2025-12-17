@@ -62,7 +62,7 @@ class JwtAuthenticationFilterTest {
     class AuthorizationHeaderTests {
 
         @Test
-        @DisplayName("Без Authorization header продовжує без автентифікації")
+        @DisplayName("Without Authorization header continues without authentication")
         void noAuthHeader_ContinuesWithoutAuth() throws ServletException, IOException {
             when(request.getHeader("Authorization")).thenReturn(null);
 
