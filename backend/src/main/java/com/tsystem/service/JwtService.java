@@ -1,7 +1,5 @@
 package com.tsystem.service;
-
 import com.tsystem.model.user.User;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -13,22 +11,33 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-
 @Service
 @RequiredArgsConstructor
-
 public class JwtService {
 
-    private static String SECRET_KEY;
+    private static final long JWT_EXPIRATION_MS = 8 * 60 * 60 * 1000; // 8 hours
 
-    @Value("${jwt.secret-key}")
-    public void setSecretKey(String secretKey) {
-        SECRET_KEY = secretKey;
+    private static String PRIVATE_KEY;
+    private static String PUBLIC_KEY;
+
+    @Value("${jwt.private-key}")
+    public void setPrivateKey(String privateKey) {
+        PRIVATE_KEY = privateKey;
+    }
+
+    @Value("${jwt.public-key}")
+    public void setPublicKey(String publicKey) {
+        PUBLIC_KEY = publicKey;
     }
 
     public String extractUsername(String jwt) {
@@ -39,7 +48,6 @@ public class JwtService {
         final Claims claims = extractAllClaims(jwt);
         return claimsResolver.apply(claims);
     }
-
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
@@ -53,8 +61,6 @@ public class JwtService {
         claims.put("userId", user.getId());
         claims.put("name", user.getName());
         claims.put("surname", user.getSurname());
-
-        // Add roles and permissions to JWT
         claims.put("role", user.getRole().name());
         claims.put("permissions",
                 user.getAuthorities().stream()
@@ -65,14 +71,13 @@ public class JwtService {
         return generateToken(claims, userDetails);
     }
 
-
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return Jwts.builder()
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000))
-                .signWith(getSignInKey(), SignatureAlgorithm.HS512)
+                .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION_MS))
+                .signWith(getPrivateSigningKey(), SignatureAlgorithm.RS512)
                 .compact();
     }
 
@@ -82,7 +87,6 @@ public class JwtService {
     }
 
     private boolean isTokenExpired(String jwt) {
-
         return extractExpiration(jwt).before(new Date());
     }
 
@@ -90,22 +94,42 @@ public class JwtService {
         return extractClaim(jwt, Claims::getExpiration);
     }
 
-
     private Claims extractAllClaims(String jwt) {
         return Jwts
                 .parserBuilder()
-                .setSigningKey(getSignInKey())
+                .setSigningKey(getPublicVerifyingKey())
                 .build()
                 .parseClaimsJws(jwt)
                 .getBody();
-
     }
 
-    private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
-        return Keys.hmacShaKeyFor(keyBytes);
+    /**
+     * Получает приватный ключ для подписи токена
+     */
+    private PrivateKey getPrivateSigningKey() {
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(PRIVATE_KEY);
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            return keyFactory.generatePrivate(keySpec);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load private key", e);
+        }
     }
 
+    /**
+     * Получает публичный ключ для проверки токена
+     */
+    private PublicKey getPublicVerifyingKey() {
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(PUBLIC_KEY);
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            return keyFactory.generatePublic(keySpec);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load public key", e);
+        }
+    }
 
     public String getTokenDetails(String jwt) {
         Claims claims = extractAllClaims(jwt);
@@ -118,9 +142,5 @@ public class JwtService {
         sb.append("Expiration: ").append(claims.getExpiration()).append("\n");
         sb.append("All claims: ").append(claims).append("\n");
         return sb.toString();
-
-
     }
-
-
 }
