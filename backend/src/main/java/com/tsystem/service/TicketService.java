@@ -19,8 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
-import com.tsystem.exception.ForbiddenException;
-
 @Service
 @RequiredArgsConstructor
 public class TicketService {
@@ -124,4 +122,73 @@ public class TicketService {
     private Ticket getTicket(UUID projectId, UUID ticketId){
         return ticketRepository.findByIdAndProjectId(ticketId, projectId).orElseThrow(NotFoundException::new);
     }
+
+
+    // --------- COMMENTS ---------
+
+//    @Transactional(readOnly = true)
+//    public List<TicketComment> getComments(UUID projectId, UUID ticketId, String username) {
+//        mustOwnProject(projectId, username);
+//        ticketRepository.findByIdAndProjectId(ticketId, projectId)
+//                .orElseThrow(NotFoundException::new);
+//        return ticketComments.findByTicketIdOrderByCreatedAtAsc(ticketId);
+//    }
+//
+//    @Transactional
+//    public TicketComment addComment(UUID projectId, UUID ticketId, TicketCommentRequest request, String username) {
+//        mustOwnProject(projectId, username);
+//        tickets.findByIdAndProjectId(ticketId, projectId)
+//                .orElseThrow(NotFoundException::new);
+//        User author = me(username);
+//
+//        TicketComment comment = TicketComment.builder()
+//                .ticketId(ticketId)
+//                .authorId(author.getId())
+//                .body(request.getBody())
+//                .build();
+//
+//        return ticketComments.save(comment);
+//    }
+//
+//    @Transactional
+//    public TicketComment updateComment(UUID projectId,
+//                                       UUID ticketId,
+//                                       UUID commentId,
+//                                       TicketCommentRequest request,
+//                                       String username) {
+//        mustOwnProject(projectId, username);
+//        tickets.findByIdAndProjectId(ticketId, projectId)
+//                .orElseThrow(NotFoundException::new);
+//
+//        TicketComment comment = ticketComments.findById(commentId)
+//                .orElseThrow(NotFoundException::new);
+//
+//        User actor = me(username);
+//        if (!comment.getAuthorId().equals(actor.getId())) {
+//            throw new ForbiddenException();
+//        }
+//
+//        comment.setBody(request.getBody());
+//        return ticketComments.save(comment);
+//    }
+//
+//    @Transactional
+//    public void deleteComment(UUID projectId,
+//                              UUID ticketId,
+//                              UUID commentId,
+//                              String username) {
+//        mustOwnProject(projectId, username);
+//        tickets.findByIdAndProjectId(ticketId, projectId)
+//                .orElseThrow(NotFoundException::new);
+//
+//        TicketComment comment = ticketComments.findById(commentId)
+//                .orElseThrow(NotFoundException::new);
+//
+//        User actor = me(username);
+//        if (!comment.getAuthorId().equals(actor.getId())) {
+//            throw new ForbiddenException();
+//        }
+//
+//        ticketComments.delete(comment);
+//    }
 }

@@ -80,4 +80,8 @@ public class UserService {
 
         userRepository.delete(user);
     }
+
+    public void incrementTokenVersion(UUID userId) {
+         userRepository.incrementTokenVersion(userId);
+    }
 }

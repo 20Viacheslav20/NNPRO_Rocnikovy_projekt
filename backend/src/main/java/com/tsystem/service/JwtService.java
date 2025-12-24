@@ -1,5 +1,6 @@
 package com.tsystem.service;
 import com.tsystem.model.user.User;
+import com.tsystem.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -19,6 +20,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -29,6 +31,7 @@ public class JwtService {
 
     private static String PRIVATE_KEY;
     private static String PUBLIC_KEY;
+    private final UserRepository userRepository;
 
     @Value("${jwt.private-key}")
     public void setPrivateKey(String privateKey) {
@@ -67,6 +70,7 @@ public class JwtService {
                         .map(a -> a.getAuthority())
                         .toList()
         );
+        claims.put("tokenVersion", user.getTokenVersion());
 
         return generateToken(claims, userDetails);
     }
@@ -83,7 +87,23 @@ public class JwtService {
 
     public boolean isTokenValid(String jwt, UserDetails userDetails) {
         final String username = extractUsername(jwt);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(jwt);
+        Claims claims = Jwts.parser()
+                .setSigningKey(getPublicVerifyingKey())
+                .parseClaimsJws(jwt)
+                .getBody();
+
+        String userIdStr = claims.get("userId", String.class);
+        UUID userId = UUID.fromString(userIdStr);
+        Integer tokenVersion = claims.get("tokenVersion", Integer.class);
+
+        // Получаем текущую версию из БД
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Проверяем, совпадает ли версия
+        return (tokenVersion.equals(user.getTokenVersion()))
+                && (username.equals(userDetails.getUsername()))
+                && !isTokenExpired(jwt);
     }
 
     private boolean isTokenExpired(String jwt) {

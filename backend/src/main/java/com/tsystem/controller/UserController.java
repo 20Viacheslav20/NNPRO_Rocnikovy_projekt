@@ -5,13 +5,16 @@ import com.tsystem.model.dto.response.UserResponse;
 import com.tsystem.model.dto.response.UserShortResponse;
 import com.tsystem.model.mapper.UserMapper;
 import com.tsystem.service.UserService;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -47,5 +50,15 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {
         userService.delete(id);
+    }
+
+    @PostMapping("/{userId}/revoke-tokens")
+//    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<?> revokeAllUserTokens(@PathVariable UUID userId) {
+        userService.incrementTokenVersion(userId);
+        return ResponseEntity.ok(
+                Map.of("message", "All tokens revoked for user " + userId)
+        );
     }
 }

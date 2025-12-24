@@ -46,6 +46,10 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private SystemRole role;
 
+    @Column(name = "token_version")
+    @Builder.Default
+    private Integer tokenVersion = 0;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return role.getAuthorities();
