@@ -1,0 +1,49 @@
+<mat-card class="comments-card">
+    <h3>Comments</h3>
+
+    <div class="comment" *ngFor="let c of comments">
+
+        <div class="comment-header">
+            <span class="author">{{ c.authorName }}</span>
+            <span class="date">{{ c.createdAt | date:'short' }}</span>
+        </div>
+
+        <!-- VIEW MODE -->
+        <div *ngIf="editingId !== c.id" class="comment-text">
+            {{ c.text }}
+        </div>
+
+        <!-- EDIT MODE -->
+        <div *ngIf="editingId === c.id">
+            <mat-form-field appearance="outline" class="full">
+                <textarea matInput rows="3" [(ngModel)]="editingText"></textarea>
+            </mat-form-field>
+
+            <div class="actions">
+                <button mat-button color="primary" (click)="saveEdit(c)">Save</button>
+                <button mat-button (click)="cancelEdit()">Cancel</button>
+            </div>
+        </div>
+
+        <div class="comment-actions" *ngIf="isMine(c) && editingId !== c.id">
+            <button mat-icon-button (click)="startEdit(c)">
+                <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="remove(c)">
+                <mat-icon>delete</mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <!-- CREATE -->
+    <div class="new-comment">
+        <mat-form-field appearance="outline" class="full">
+            <mat-label>New comment</mat-label>
+            <textarea matInput rows="3" [(ngModel)]="newText"></textarea>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" (click)="create()">
+            Add comment
+        </button>
+    </div>
+</mat-card>

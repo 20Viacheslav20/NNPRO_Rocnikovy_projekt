@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Ticket, TicketRequest } from '../../pages/tickets/ticket.models';
 import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
+import { TicketHistory } from '../../pages/tickets/ticket-history.model';
 
 @Injectable({ providedIn: 'root' })
 export class TicketService {
@@ -36,5 +37,9 @@ export class TicketService {
 
     delete(projectId: string, ticketId: string): Observable<void> {
         return this.http.delete<void>(`${this.base}/projects/${projectId}/tickets/${ticketId}`);
+    }
+
+    getHistory(projectId: string, ticketId: string): Observable<TicketHistory[]> {
+        return this.http.get<TicketHistory[]>(`${this.base}/projects/${projectId}/tickets/${ticketId}/history`);
     }
 }

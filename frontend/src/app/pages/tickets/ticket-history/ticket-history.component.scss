@@ -1,0 +1,26 @@
+.history-item {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 14px;
+
+    .date {
+        color: rgba(0, 0, 0, 0.6);
+    }
+
+    .author {
+        font-weight: 600;
+    }
+
+    .action {
+        text-transform: uppercase;
+    }
+
+    .field {
+        font-style: italic;
+    }
+
+    span {
+        margin-right: 4px;
+    }
+}

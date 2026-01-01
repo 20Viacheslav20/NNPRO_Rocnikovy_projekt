@@ -39,6 +39,15 @@
                 <button mat-icon-button matTooltip="Delete" color="warn" (click)="remove(u)">
                     <mat-icon>delete</mat-icon>
                 </button>
+
+                <button *ngIf="!u.blocked" mat-icon-button matTooltip="Block" color="warn" (click)="block(u)">
+                    <mat-icon>block</mat-icon>
+                </button>
+
+                <button *ngIf="u.blocked" mat-icon-button matTooltip="Unblock" color="primary" (click)="unblock(u)">
+                    <mat-icon>lock_open</mat-icon>
+                </button>
+
             </td>
         </ng-container>
 

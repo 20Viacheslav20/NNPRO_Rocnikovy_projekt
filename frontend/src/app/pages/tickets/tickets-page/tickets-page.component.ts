@@ -46,7 +46,6 @@ export class TicketsPageComponent {
     ) {
         this.route.paramMap.subscribe((p: ParamMap) => {
             this.projectId = p.get('projectId')!;
-            debugger
             if (this.projectId) {
                 this.load();
             } else {

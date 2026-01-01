@@ -15,6 +15,7 @@ public class UserMapper {
                 .surname(u.getSurname())
                 .username(u.getUsername())
                 .role(u.getRole().toString())
+                .isBlocked(u.isBlocked())
                 .build();
     }
 

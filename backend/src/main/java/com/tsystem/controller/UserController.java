@@ -14,7 +14,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -52,13 +51,17 @@ public class UserController {
         userService.delete(id);
     }
 
-    @PostMapping("/{userId}/revoke-tokens")
-//    @PreAuthorize("hasRole('ADMIN')")
-    @Transactional
-    public ResponseEntity<?> revokeAllUserTokens(@PathVariable UUID userId) {
-        userService.incrementTokenVersion(userId);
-        return ResponseEntity.ok(
-                Map.of("message", "All tokens revoked for user " + userId)
-        );
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/block")
+    public ResponseEntity<Void> blockUser(@PathVariable UUID id) {
+        userService.blockUser(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/unblock")
+    public ResponseEntity<Void> unblockUser(@PathVariable UUID id) {
+        userService.unblockUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

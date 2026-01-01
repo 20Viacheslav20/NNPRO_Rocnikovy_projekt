@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { User } from '../../shared/models/user.model';
 import { Observable } from 'rxjs';
 import { UserRequest } from '../../pages/users/model/user-request.model'
@@ -30,5 +30,13 @@ export class UserService {
 
     delete(id: string): Observable<void> {
         return this.http.delete<void>(`${this.baseURL}/${id}`);
+    }
+
+    blockUser(userId: string): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.baseURL}/${userId}/block`, null, { observe: 'response' });
+    }
+
+    unblockUser(userId: string): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.baseURL}/${userId}/unblock`, null, { observe: 'response' });
     }
 }

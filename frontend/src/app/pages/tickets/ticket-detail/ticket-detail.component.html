@@ -54,5 +54,8 @@
     </div>
 
   </mat-card-content>
-
 </mat-card>
+<app-ticket-comments *ngIf="ticket" [ticketId]="ticket.id" [projectId]="ticket.projectId">
+</app-ticket-comments>
+<app-ticket-history *ngIf="ticket" [projectId]="projectId" [ticketId]="ticket.id">
+</app-ticket-history>

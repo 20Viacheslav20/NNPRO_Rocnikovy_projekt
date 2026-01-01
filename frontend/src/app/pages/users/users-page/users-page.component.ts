@@ -97,4 +97,26 @@ export class UsersPageComponent implements OnInit {
       .join(' ');
   }
 
+  block(user: User) {
+    if (!confirm(`Block user ${user.username}?`)) return;
+    this.service.blockUser(user.id).subscribe({
+      next: () => {
+        this.snack.open(`${user.username} blocked`, 'Close', { duration: 2000 });
+        this.load();
+      },
+      error: () => this.snack.open(`Failed to block ${user.username}`, 'Close', { duration: 2000 })
+    });
+  }
+
+  unblock(user: User) {
+    if (!confirm(`Unblock user ${user.username}?`)) return;
+    this.service.unblockUser(user.id).subscribe({
+      next: () => {
+        this.snack.open(`${user.username} unblocked`, 'Close', { duration: 2000 });
+        this.load();
+      },
+      error: () => this.snack.open(`Failed to unblock ${user.username}`, 'Close', { duration: 2000 })
+    });
+  }
+
 }

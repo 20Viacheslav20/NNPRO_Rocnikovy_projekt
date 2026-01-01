@@ -50,6 +50,8 @@ public class User implements UserDetails {
     @Builder.Default
     private Integer tokenVersion = 0;
 
+    private boolean blocked;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return role.getAuthorities();

@@ -13,8 +13,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE User u SET u.blocked = true, u.tokenVersion = u.tokenVersion + 1 WHERE u.id = :userId")
+    int blockUser(@Param("userId") UUID userId);
 
-    @Modifying
-    @Query("UPDATE User u SET u.tokenVersion = u.tokenVersion + 1 WHERE u.id = :userId")
-    void incrementTokenVersion(@Param("userId") UUID userId);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE User u SET u.blocked = false, u.tokenVersion = u.tokenVersion + 1 WHERE u.id = :userId")
+    int unblockUser(@Param("userId") UUID userId);
 }

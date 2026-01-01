@@ -14,5 +14,5 @@ import java.util.UUID;
 public class TicketCommentRequest {
     private UUID ticketId;
     private UUID commentAuthorId;
-    private String body;
+    private String text;
 }

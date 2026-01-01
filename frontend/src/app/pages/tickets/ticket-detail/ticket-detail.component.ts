@@ -11,6 +11,8 @@ import { DateTimePipe } from '../../../shared/pipes/date-time.pipe';
 import { TicketTypePipe } from '../../../shared/pipes/ticketType.pipe';
 import { TicketStatePipe } from '../../../shared/pipes/ticketState.pipe';
 import { TicketPriorityPipe } from '../../../shared/pipes/ticketPriority.pipe';
+import { TicketCommentsComponent } from '../ticket-comments/ticket-comments.component';
+import { TicketHistoryComponent } from '../ticket-history/ticket-history.component';
 
 @Component({
     selector: 'app-ticket-detail',
@@ -18,7 +20,7 @@ import { TicketPriorityPipe } from '../../../shared/pipes/ticketPriority.pipe';
     imports: [
         CommonModule, RouterLink, FormsModule,
         MatCardModule, MatButtonModule, MatIconModule, DateTimePipe, TicketTypePipe,
-        TicketStatePipe, TicketPriorityPipe
+        TicketStatePipe, TicketPriorityPipe, TicketCommentsComponent, TicketHistoryComponent
     ],
     templateUrl: './ticket-detail.component.html',
     styleUrls: ['./ticket-detail.component.scss']

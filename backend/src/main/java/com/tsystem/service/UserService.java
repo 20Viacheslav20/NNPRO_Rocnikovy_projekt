@@ -5,6 +5,7 @@ import com.tsystem.model.dto.request.UserRequest;
 import com.tsystem.model.user.SystemRole;
 import com.tsystem.model.user.User;
 import com.tsystem.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -81,7 +82,19 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    public void incrementTokenVersion(UUID userId) {
-         userRepository.incrementTokenVersion(userId);
+    @Transactional
+    public void blockUser(UUID userId) {
+        int updated = userRepository.blockUser(userId);
+        if (updated == 0) {
+            throw new EntityNotFoundException("User not found");
+        }
+    }
+
+    @Transactional
+    public void unblockUser(UUID userId) {
+        int updated = userRepository.unblockUser(userId);
+        if (updated == 0) {
+            throw new EntityNotFoundException("User not found");
+        }
     }
 }

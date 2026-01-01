@@ -12,8 +12,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class TicketCommentResponse {
-
+    private UUID id;
     private UUID ticketId;
     private UUID commentAuthorId;
-    private String body;
+    private String text;
 }

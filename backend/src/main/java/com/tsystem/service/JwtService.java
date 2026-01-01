@@ -101,7 +101,8 @@ public class JwtService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Проверяем, совпадает ли версия
-        return (tokenVersion.equals(user.getTokenVersion()))
+        return  !user.isBlocked()
+                &&(tokenVersion.equals(user.getTokenVersion()))
                 && (username.equals(userDetails.getUsername()))
                 && !isTokenExpired(jwt);
     }

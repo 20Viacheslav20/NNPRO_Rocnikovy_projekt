@@ -67,6 +67,9 @@ public class AuthService {
                 .orElseGet(() -> userRepository.findByEmail(request.getLogin())
                         .orElseThrow(() -> new IllegalArgumentException("Invalid credentials")));
 
+        if (user.isBlocked())
+            throw new IllegalArgumentException("Invalid credentials");
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getUsername(), request.getPassword())
         );

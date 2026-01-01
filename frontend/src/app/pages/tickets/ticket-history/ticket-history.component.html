@@ -1,0 +1,23 @@
+<mat-card>
+    <mat-card-title>Ticket History</mat-card-title>
+
+    <mat-list *ngIf="!loading && history.length">
+        <mat-list-item *ngFor="let item of history">
+            <div class="history-item">
+                <span class="date">{{ item.createdAt | date:'short' }}</span>
+                <span class="action">{{ item.action }}</span>
+                <span *ngIf="item.field" class="field">[{{ item.field }}]</span>
+                <span *ngIf="item.oldValue">from "{{ item.oldValue }}"</span>
+                <span *ngIf="item.newValue">to "{{ item.newValue }}"</span>
+            </div>
+        </mat-list-item>
+    </mat-list>
+
+    <div *ngIf="!loading && history.length === 0">
+        No history available
+    </div>
+
+    <div *ngIf="loading">
+        Loading history...
+    </div>
+</mat-card>

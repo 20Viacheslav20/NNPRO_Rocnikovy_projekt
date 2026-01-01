@@ -85,8 +85,6 @@ export class ProjectsPageComponent implements OnInit {
         projects = projects.sort(
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
-
-        debugger
         this.data.set(projects);
         this.dataSource.data = projects;
         this.loading.set(false);
