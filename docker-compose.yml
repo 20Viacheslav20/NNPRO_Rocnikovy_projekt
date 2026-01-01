@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_DB: tsystem
+      POSTGRES_USER: tsystem
+      POSTGRES_PASSWORD: tsystem
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+    container_name: backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/tsystem
+      SPRING_DATASOURCE_USERNAME: tsystem
+      SPRING_DATASOURCE_PASSWORD: tsystem
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_PRIVATE_KEY: "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCV0nOMi4sEoG6oQjPMHAoklAfH+S4DU+SL/A9VGYOWS0uYoWRJdpVvZ1wfKOgVcg9h7vJRm/xf4B/P09Tcs5U3XaWSZgIZ3MeV2X31ApK8u64LtMfA+FnQdZVFVrNB6noaaNXNp3CBP4O7ZTxGqKm8dKiAigZV5/bSwInMe097wo0l0AuSLpq+0nXUEtLwyRjm0IAQDe+6DQNsqcbDuZCZ/3p9S5L5ZjPFBQVcdsN3H/DEecrc6RkljVf4I+RU/5ZCwYR5ChzA7HXHzSS5/O2T+NZp/8Hva0dctjpCeZoIJIYsgrumkhEAQwwnmObkYoi3CG9lJW0Knj4Qef21HDZrAgMBAAECggEAGa9kPuaXdToZ7n+3CJmQBZhZQyfNgyWJS5RxfnnqzMPo2Ghm3I9XbCtwqCjnrPGKgJQp9+LBoCA44/Thi9q/zKeh4JjbaFqo3uBUD0KbLH8ShhA+pK8PGsVly2bjQXw05b0uVl0L1SSx7VkcPdLhkpz/XFYNYwHrF1OJ7EQBquo679UooZ2zz9zHpk4zIH64iIhTMmbvc/d73+aisXDZF8H6QRABzdkZQeb4K9ll/eIZwTt0PyCddxDO9mQmRGChVmXtpXy2MbwZHrqDpTwBInCJcDQeta41ZTQRPjO1xQj40RcjfcJfAluuYEZG0rGpOZjwBafdF0RlqqRB98QvgQKBgQDOuiao470K8ZGnN15xqvImI3dmraS7/JBdhOUctmXgyXbRZe9k1uAqn3akaKPWkI9lCX+z4T89eWnnstnx/RhJIAKDTGrLdHisvTPFKqGp+BqHCLkAJX8mejz2gsm+39qqaDdeRSPGkKHNEiF87XaXz/RNdtqG1PmQE3OJKkHygQKBgQC5iCEWPj43sOUtX2e7p/pPUjCgvpWXJy0cCVGcEl9xamkDEWhCXwUPLF0aylemtIy0Eywu01wxjlowqXi7XNyQkSrMjfCiAQn2zCdq2CDNDH2IrbfugjtCPmllazOWd3XqnwIEq3k7mQxr3l55PhRObcpxgUrHmz3Ue4021DGa6wKBgC7TkcA93etlrsV+0EDVJQaoj/pNKPyACD92w+MOGeOiHuzttx1TYvGkr14sabhHhIOxdCDNy+Jj5y5Zn+6lkuO1gXw2ShaN6mvOa7SkpHv4vCGMQ0OaOsP/emGoXISE9mYVNz1+Uc0/o7bs/XLr4yoeK8uEOZnDEkilb01JqiiBAoGBAJ6NhnEi2jrvsrsWyGinghOdkq8ckGxvb26BTDwLu4MKRBn6G1Z1K7au3BZUC5oMvB38MIsH18cF92+UtPexwVDOrnvHZXidWK2QBLObZlS1suZGR2TN6OSQv7OLbLfO+Xd7Udc5z04uWl4o2CXW9rWbwCFGM+jnc2yN9b2Ak6/nAoGAX3rNm0Irk5J9alql0mqKJs2QtOhk3cxbrVa6rF0TGVCt2PAu8yun/jiOJCiQ98ZUniThqjRJgU98t6RoTHdKpROPTh818JTKltxAJ8zGo8+h9xtJT4lfrDNaA3mdjNHTkaWg9CGuJd9EZvNg337WXNgpvlldpv0FNIOndj0nGYw="
+      JWT_PUBLIC_KEY: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAldJzjIuLBKBuqEIzzBwKJJQHx/kuA1Pki/wPVRmDlktLmKFkSXaVb2dcHyjoFXIPYe7yUZv8X+Afz9PU3LOVN12lkmYCGdzHldl99QKSvLuuC7THwPhZ0HWVRVazQep6GmjVzadwgT+Du2U8RqipvHSogIoGVef20sCJzHtPe8KNJdALki6avtJ11BLS8MkY5tCAEA3vug0DbKnGw7mQmf96fUuS+WYzxQUFXHbDdx/wxHnK3OkZJY1X+CPkVP+WQsGEeQocwOx1x80kufztk/jWaf/B72tHXLY6QnmaCCSGLIK7ppIRAEMMJ5jm5GKItwhvZSVtCp4+EHn9tRw2awIDAQAB"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
