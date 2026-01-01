@@ -51,7 +51,7 @@ export class UsersPage {
   }
 
   async findUserRow(identifier: string): Promise<Locator> {
-    return this.page.locator(`tr.data-row:has-text("${identifier}")`);
+    return this.page.locator(`tr.mat-mdc-row:has-text("${identifier}")`);
   }
 
   async editUser(identifier: string, updates: { name?: string; surname?: string; role?: string }) {
@@ -104,7 +104,7 @@ export class UsersPage {
   }
 
   async getUserCount(): Promise<number> {
-    const rows = this.page.locator('tr.data-row');
+    const rows = this.page.locator('tr.mat-mdc-row');
     return await rows.count();
   }
 }

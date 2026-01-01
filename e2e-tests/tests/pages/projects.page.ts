@@ -114,6 +114,41 @@ export class ProjectsPage {
         await this.waitForLoad();
     }
 
+    // Simple edit that only changes name - status should already be set from backend
+    async editProjectSimple(name: string, newName: string) {
+        const row = await this.findProjectRow(name);
+        await row.locator('button[mattooltip="Edit"]').click();
+
+        const dialog = this.page.locator('mat-dialog-container');
+        await expect(dialog).toBeVisible();
+
+        // Wait for form to be ready and populated from backend
+        await this.page.waitForTimeout(1000);
+
+        // Fill name
+        const nameInput = this.page.locator('input[formcontrolname="name"]');
+        await nameInput.clear();
+        await nameInput.fill(newName);
+
+        // Wait a moment for form validation
+        await this.page.waitForTimeout(500);
+
+        // In edit mode button says "Save"
+        const saveButton = this.page.locator('mat-dialog-container button:has-text("Save")');
+
+        // Wait for button to be enabled
+        await expect(saveButton).toBeEnabled({ timeout: 10000 });
+
+        // Click save
+        await saveButton.click();
+
+        // Wait for dialog to close (API call + close animation)
+        await expect(dialog).toBeHidden({ timeout: 15000 });
+
+        await this.page.waitForTimeout(1000);
+        await this.waitForLoad();
+    }
+
     async deleteProject(name: string) {
         const row = await this.findProjectRow(name);
 

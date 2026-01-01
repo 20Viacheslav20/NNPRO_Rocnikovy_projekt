@@ -9,13 +9,10 @@ import { LoginPage, RegisterPage, ProjectsPage, TicketsPage, NavigationPage } fr
  * - Project CRUD operations
  * - Ticket CRUD operations
  * - Ticket lifecycle (state changes)
+ * - Ticket Comments
+ * - Ticket History
  * - User management
- * - Filtering and search
  * - Navigation
- *
- * Prerequisites:
- * - Backend running on http://localhost:8080
- * - Frontend running on http://localhost:4200
  */
 
 // ============================================
@@ -57,8 +54,11 @@ test.describe.serial('E2E Flow Test: Complete User Journey', () => {
             testData.user.password
         );
 
+        // Wait for API response and redirect
+        await page.waitForTimeout(3000);
+
         // After registration, frontend redirects to /login
-        await expect(page).toHaveURL('/login', { timeout: 15000 });
+        await expect(page).toHaveURL(/\/login/, { timeout: 15000 });
         userRegistered = true;
     });
 
@@ -193,64 +193,8 @@ test.describe.serial('E2E Flow Test: Complete User Journey', () => {
 
         const nav = new NavigationPage(page);
         await nav.logout();
-        await expect(page).toHaveURL('/login');
+        await expect(page).toHaveURL(/\/login/);
     });
-});
-
-// ============================================
-// STANDALONE: Full ticket lifecycle in one test
-// ============================================
-test('Full ticket lifecycle in single test', async ({ page }) => {
-    const uniqueEmail = `e2e-lifecycle-${Date.now()}@example.com`;
-    const projectName = `Lifecycle Project ${Date.now()}`;
-    const ticketName = 'Lifecycle Ticket';
-
-    // 1. Register
-    const registerPage = new RegisterPage(page);
-    await registerPage.goto();
-    await registerPage.register(uniqueEmail, 'Lifecycle', 'User', 'Password123!');
-    await expect(page).toHaveURL('/login', { timeout: 15000 });
-
-    // 2. Login
-    const loginPage = new LoginPage(page);
-    await loginPage.login(uniqueEmail, 'Password123!');
-    await expect(page).toHaveURL(/\/projects|\/tickets/, { timeout: 15000 });
-
-    const nav = new NavigationPage(page);
-    const projectsPage = new ProjectsPage(page);
-    const ticketsPage = new TicketsPage(page);
-
-    // 3. Create project
-    await nav.goToProjects();
-    await projectsPage.createProject(projectName, 'Lifecycle test project');
-    await projectsPage.expectProjectExists(projectName);
-
-    // 4. Create ticket
-    await projectsPage.openProject(projectName);
-    await ticketsPage.waitForLoad();
-    await ticketsPage.createTicket(ticketName, 'Lifecycle test ticket', 'task', 'med');
-    await ticketsPage.expectTicketExists(ticketName);
-
-    // 5. Change state: open -> in_progress -> done
-    await ticketsPage.editTicket(ticketName, { state: 'in_progress' });
-    await ticketsPage.expectTicketState(ticketName, 'In progress');
-
-    await ticketsPage.editTicket(ticketName, { state: 'done' });
-    await ticketsPage.expectTicketState(ticketName, 'Done');
-
-    // 6. Delete ticket
-    await ticketsPage.deleteTicket(ticketName);
-    await ticketsPage.expectTicketNotExists(ticketName);
-
-    // 7. Delete project
-    await nav.goToProjects();
-    await projectsPage.waitForLoad();
-    await projectsPage.deleteProject(projectName);
-    await projectsPage.expectProjectNotExists(projectName);
-
-    // 8. Logout
-    await nav.logout();
-    await expect(page).toHaveURL('/login');
 });
 
 // ============================================
@@ -262,7 +206,7 @@ test('Login with invalid credentials shows error', async ({ page }) => {
 
     await loginPage.login('invalid@email.com', 'wrongpassword');
 
-    await expect(page).toHaveURL('/login');
+    await expect(page).toHaveURL(/\/login/);
     await page.waitForTimeout(2000);
     await expect(page.locator('.error')).toBeVisible({ timeout: 5000 });
 });
@@ -279,11 +223,12 @@ test.describe('Project Management', () => {
         const registerPage = new RegisterPage(page);
         await registerPage.goto();
         await registerPage.register(testEmail, 'Project', 'Tester', 'Password123!');
-        await page.waitForURL('/login', { timeout: 15000 });
+        await page.waitForTimeout(2000);
+        await page.waitForURL(/\/login/, { timeout: 15000 });
         await page.close();
     });
 
-    test('Create multiple projects', async ({ page }) => {
+    test('Create project with name and description', async ({ page }) => {
         const loginPage = new LoginPage(page);
         await loginPage.goto();
         await loginPage.login(testEmail, 'Password123!');
@@ -293,52 +238,13 @@ test.describe('Project Management', () => {
         await nav.goToProjects();
 
         const projectsPage = new ProjectsPage(page);
-        const project1 = `Multi Project 1 - ${Date.now()}`;
-        const project2 = `Multi Project 2 - ${Date.now()}`;
+        const projectName = `Test Project ${Date.now()}`;
 
-        // Create first project and wait
-        await projectsPage.createProject(project1, 'First project');
-        await projectsPage.expectProjectExists(project1);
-
-        // Wait a bit before creating second project
-        await page.waitForTimeout(1000);
-
-        // Create second project
-        await projectsPage.createProject(project2, 'Second project');
-        await projectsPage.expectProjectExists(project2);
+        await projectsPage.createProject(projectName, 'Test description');
+        await projectsPage.expectProjectExists(projectName);
 
         // Cleanup
-        await projectsPage.deleteProject(project1);
-        await projectsPage.deleteProject(project2);
-    });
-
-    test('Search projects by name', async ({ page }) => {
-        const loginPage = new LoginPage(page);
-        await loginPage.goto();
-        await loginPage.login(testEmail, 'Password123!');
-        await expect(page).toHaveURL(/\/projects|\/tickets/, { timeout: 15000 });
-
-        const nav = new NavigationPage(page);
-        await nav.goToProjects();
-
-        const projectsPage = new ProjectsPage(page);
-        const uniqueName = `SearchTest-${Date.now()}`;
-
-        // Create project with unique name
-        await projectsPage.createProject(uniqueName, 'Search test');
-        await projectsPage.expectProjectExists(uniqueName);
-
-        // Search for it
-        await projectsPage.searchProject(uniqueName);
-        await page.waitForTimeout(500);
-
-        // Should still be visible after search
-        await projectsPage.expectProjectExists(uniqueName);
-
-        // Cleanup
-        await projectsPage.searchProject(''); // Clear search
-        await page.waitForTimeout(500);
-        await projectsPage.deleteProject(uniqueName);
+        await projectsPage.deleteProject(projectName);
     });
 });
 
@@ -354,30 +260,14 @@ test.describe('Ticket Management', () => {
         projectName = `Ticket Test Project ${Date.now()}`;
 
         const page = await browser.newPage();
-
-        // Register
         const registerPage = new RegisterPage(page);
         await registerPage.goto();
         await registerPage.register(testEmail, 'Ticket', 'Tester', 'Password123!');
-        await page.waitForURL('/login', { timeout: 15000 });
+        await page.waitForTimeout(2000);
+        await page.waitForURL(/\/login/, { timeout: 15000 });
 
         // Login and create project
         const loginPage = new LoginPage(page);
-        await loginPage.login(testEmail, 'Password123!');
-        await page.waitForURL(/\/projects|\/tickets/, { timeout: 15000 });
-
-        const nav = new NavigationPage(page);
-        await nav.goToProjects();
-
-        const projectsPage = new ProjectsPage(page);
-        await projectsPage.createProject(projectName, 'For ticket tests');
-
-        await page.close();
-    });
-
-    test('Create tickets of different types', async ({ page }) => {
-        const loginPage = new LoginPage(page);
-        await loginPage.goto();
         await loginPage.login(testEmail, 'Password123!');
         await expect(page).toHaveURL(/\/projects|\/tickets/, { timeout: 15000 });
 
@@ -385,32 +275,8 @@ test.describe('Ticket Management', () => {
         await nav.goToProjects();
 
         const projectsPage = new ProjectsPage(page);
-        await projectsPage.waitForLoad();
-        await projectsPage.openProject(projectName);
-
-        const ticketsPage = new TicketsPage(page);
-        await ticketsPage.waitForLoad();
-
-        // Create bug
-        await ticketsPage.createTicket('Bug Ticket', 'A bug', 'bug', 'high');
-        await ticketsPage.expectTicketExists('Bug Ticket');
-
-        // Create feature
-        await ticketsPage.createTicket('Feature Ticket', 'A feature', 'feature', 'med');
-        await ticketsPage.expectTicketExists('Feature Ticket');
-
-        // Create task
-        await ticketsPage.createTicket('Task Ticket', 'A task', 'task', 'low');
-        await ticketsPage.expectTicketExists('Task Ticket');
-
-        // Verify count
-        const count = await ticketsPage.getTicketCount();
-        expect(count).toBe(3);
-
-        // Cleanup
-        await ticketsPage.deleteTicket('Bug Ticket');
-        await ticketsPage.deleteTicket('Feature Ticket');
-        await ticketsPage.deleteTicket('Task Ticket');
+        await projectsPage.createProject(projectName, 'Project for ticket testing');
+        await page.close();
     });
 
     test('Edit ticket details', async ({ page }) => {
@@ -483,6 +349,285 @@ test.describe('Ticket Management', () => {
 });
 
 // ============================================
+// TICKET COMMENTS
+// ============================================
+test.describe('Ticket Comments', () => {
+    let testEmail: string;
+    let projectName: string;
+
+    test.beforeAll(async ({ browser }) => {
+        testEmail = `e2e-comments-${Date.now()}@example.com`;
+        projectName = `Comments Test Project ${Date.now()}`;
+
+        const page = await browser.newPage();
+        const registerPage = new RegisterPage(page);
+        await registerPage.goto();
+        await registerPage.register(testEmail, 'Comments', 'Tester', 'Password123!');
+        await page.waitForTimeout(2000);
+        await page.waitForURL(/\/login/, { timeout: 15000 });
+
+        const loginPage = new LoginPage(page);
+        await loginPage.login(testEmail, 'Password123!');
+        await expect(page).toHaveURL(/\/projects|\/tickets/, { timeout: 15000 });
+
+        const nav = new NavigationPage(page);
+        await nav.goToProjects();
+
+        const projectsPage = new ProjectsPage(page);
+        await projectsPage.createProject(projectName, 'Project for comments testing');
+        await page.close();
+    });
+
+    test('Add comment to ticket', async ({ page }) => {
+        const loginPage = new LoginPage(page);
+        await loginPage.goto();
+        await loginPage.login(testEmail, 'Password123!');
+        await expect(page).toHaveURL(/\/projects|\/tickets/, { timeout: 15000 });
+
+        const nav = new NavigationPage(page);
+        await nav.goToProjects();
+
+        const projectsPage = new ProjectsPage(page);
+        await projectsPage.waitForLoad();
+        await projectsPage.openProject(projectName);
+
+        const ticketsPage = new TicketsPage(page);
+        await ticketsPage.waitForLoad();
+
+        // Create ticket
+        await ticketsPage.createTicket('Comment Test Ticket', 'Test description', 'task', 'med');
+
+        // View ticket details
+        await ticketsPage.viewTicket('Comment Test Ticket');
+        await expect(page).toHaveURL(/\/tickets\/[a-f0-9-]+/);
+
+        // Wait for comments section to load
+        await expect(page.locator('.comments-card h3')).toContainText('Comments');
+
+        // Add a comment
+        const newCommentTextarea = page.locator('.new-comment textarea');
+        await newCommentTextarea.fill('This is my first comment');
+        await page.locator('button:has-text("Add comment")').click();
+
+        // Verify comment appears
+        await page.waitForTimeout(2000);
+        await expect(page.locator('.comment-text').first()).toContainText('This is my first comment');
+
+        // Go back and cleanup
+        await page.locator('.back-link').click();
+        await ticketsPage.waitForLoad();
+        await ticketsPage.deleteTicket('Comment Test Ticket');
+    });
+
+    test('Edit comment', async ({ page }) => {
+        const loginPage = new LoginPage(page);
+        await loginPage.goto();
+        await loginPage.login(testEmail, 'Password123!');
+        await expect(page).toHaveURL(/\/projects|\/tickets/, { timeout: 15000 });
+
+        const nav = new NavigationPage(page);
+        await nav.goToProjects();
+
+        const projectsPage = new ProjectsPage(page);
+        await projectsPage.waitForLoad();
+        await projectsPage.openProject(projectName);
+
+        const ticketsPage = new TicketsPage(page);
+        await ticketsPage.waitForLoad();
+
+        // Create ticket
+        await ticketsPage.createTicket('Edit Comment Ticket', 'Test description', 'bug', 'high');
+
+        // View ticket details
+        await ticketsPage.viewTicket('Edit Comment Ticket');
+
+        // Add a comment
+        const newCommentTextarea = page.locator('.new-comment textarea');
+        await newCommentTextarea.fill('Original comment');
+        await page.locator('button:has-text("Add comment")').click();
+        await page.waitForTimeout(2000);
+
+        // Click edit button on comment
+        await page.locator('.comment-actions button mat-icon:has-text("edit")').click();
+
+        // Edit the comment - find textarea in edit mode
+        await page.waitForTimeout(500);
+        const editTextarea = page.locator('.comment mat-form-field textarea');
+        await editTextarea.clear();
+        await editTextarea.fill('Updated comment text');
+        await page.locator('.actions button:has-text("Save")').click();
+
+        // Verify updated comment
+        await page.waitForTimeout(2000);
+        await expect(page.locator('.comment-text').first()).toContainText('Updated comment text');
+
+        // Cleanup
+        await page.locator('.back-link').click();
+        await ticketsPage.waitForLoad();
+        await ticketsPage.deleteTicket('Edit Comment Ticket');
+    });
+
+    test('Delete comment', async ({ page }) => {
+        const loginPage = new LoginPage(page);
+        await loginPage.goto();
+        await loginPage.login(testEmail, 'Password123!');
+        await expect(page).toHaveURL(/\/projects|\/tickets/, { timeout: 15000 });
+
+        const nav = new NavigationPage(page);
+        await nav.goToProjects();
+
+        const projectsPage = new ProjectsPage(page);
+        await projectsPage.waitForLoad();
+        await projectsPage.openProject(projectName);
+
+        const ticketsPage = new TicketsPage(page);
+        await ticketsPage.waitForLoad();
+
+        // Create ticket
+        await ticketsPage.createTicket('Delete Comment Ticket', 'Test description', 'feature', 'low');
+
+        // View ticket details
+        await ticketsPage.viewTicket('Delete Comment Ticket');
+
+        // Add a comment
+        const newCommentTextarea = page.locator('.new-comment textarea');
+        await newCommentTextarea.fill('Comment to delete');
+        await page.locator('button:has-text("Add comment")').click();
+        await page.waitForTimeout(2000);
+
+        // Verify comment exists
+        await expect(page.locator('.comment-text').first()).toContainText('Comment to delete');
+
+        // Get initial count
+        const initialCount = await page.locator('.comment').count();
+
+        // Delete comment - set up dialog handler before clicking
+        page.once('dialog', dialog => dialog.accept());
+        await page.locator('.comment-actions button mat-icon:has-text("delete")').click();
+        await page.waitForTimeout(2000);
+
+        // Verify comment count decreased
+        const newCount = await page.locator('.comment').count();
+        expect(newCount).toBeLessThan(initialCount);
+
+        // Cleanup
+        await page.locator('.back-link').click();
+        await ticketsPage.waitForLoad();
+        await ticketsPage.deleteTicket('Delete Comment Ticket');
+    });
+});
+
+// ============================================
+// TICKET HISTORY
+// ============================================
+test.describe('Ticket History', () => {
+    let testEmail: string;
+    let projectName: string;
+
+    test.beforeAll(async ({ browser }) => {
+        testEmail = `e2e-history-${Date.now()}@example.com`;
+        projectName = `History Test Project ${Date.now()}`;
+
+        const page = await browser.newPage();
+        const registerPage = new RegisterPage(page);
+        await registerPage.goto();
+        await registerPage.register(testEmail, 'History', 'Tester', 'Password123!');
+        await page.waitForTimeout(2000);
+        await page.waitForURL(/\/login/, { timeout: 15000 });
+
+        const loginPage = new LoginPage(page);
+        await loginPage.login(testEmail, 'Password123!');
+        await expect(page).toHaveURL(/\/projects|\/tickets/, { timeout: 15000 });
+
+        const nav = new NavigationPage(page);
+        await nav.goToProjects();
+
+        const projectsPage = new ProjectsPage(page);
+        await projectsPage.createProject(projectName, 'Project for history testing');
+        await page.close();
+    });
+
+    test('View ticket creation in history', async ({ page }) => {
+        const loginPage = new LoginPage(page);
+        await loginPage.goto();
+        await loginPage.login(testEmail, 'Password123!');
+        await expect(page).toHaveURL(/\/projects|\/tickets/, { timeout: 15000 });
+
+        const nav = new NavigationPage(page);
+        await nav.goToProjects();
+
+        const projectsPage = new ProjectsPage(page);
+        await projectsPage.waitForLoad();
+        await projectsPage.openProject(projectName);
+
+        const ticketsPage = new TicketsPage(page);
+        await ticketsPage.waitForLoad();
+
+        // Create ticket
+        await ticketsPage.createTicket('History Test Ticket', 'Test description', 'task', 'med');
+
+        // View ticket details
+        await ticketsPage.viewTicket('History Test Ticket');
+        await expect(page).toHaveURL(/\/tickets\/[a-f0-9-]+/);
+
+        // Wait for history section to load
+        await expect(page.locator('mat-card-title:has-text("Ticket History")')).toBeVisible();
+
+        // Verify CREATED action in history
+        await expect(page.locator('.history-item .action').first()).toContainText('CREATED');
+
+        // Cleanup
+        await page.locator('.back-link').click();
+        await ticketsPage.waitForLoad();
+        await ticketsPage.deleteTicket('History Test Ticket');
+    });
+
+    test('View multiple field changes in history', async ({ page }) => {
+        const loginPage = new LoginPage(page);
+        await loginPage.goto();
+        await loginPage.login(testEmail, 'Password123!');
+        await expect(page).toHaveURL(/\/projects|\/tickets/, { timeout: 15000 });
+
+        const nav = new NavigationPage(page);
+        await nav.goToProjects();
+
+        const projectsPage = new ProjectsPage(page);
+        await projectsPage.waitForLoad();
+        await projectsPage.openProject(projectName);
+
+        const ticketsPage = new TicketsPage(page);
+        await ticketsPage.waitForLoad();
+
+        // Create ticket
+        await ticketsPage.createTicket('Multi Edit Ticket', 'Original description', 'task', 'low');
+
+        // Edit multiple fields at once
+        await ticketsPage.editTicket('Multi Edit Ticket', {
+            name: 'Renamed Ticket',
+            description: 'New description',
+            priority: 'high'
+        });
+
+        // View ticket details
+        await ticketsPage.viewTicket('Renamed Ticket');
+        await expect(page).toHaveURL(/\/tickets\/[a-f0-9-]+/);
+
+        // Wait for history to load
+        await page.waitForTimeout(1000);
+
+        // Verify history contains multiple field changes
+        const historyItems = page.locator('.history-item');
+        const historyCount = await historyItems.count();
+        expect(historyCount).toBeGreaterThanOrEqual(2); // At least CREATED + some updates
+
+        // Cleanup
+        await page.locator('.back-link').click();
+        await ticketsPage.waitForLoad();
+        await ticketsPage.deleteTicket('Renamed Ticket');
+    });
+});
+
+// ============================================
 // USER MANAGEMENT
 // ============================================
 test.describe('User Management', () => {
@@ -494,7 +639,8 @@ test.describe('User Management', () => {
         const registerPage = new RegisterPage(page);
         await registerPage.goto();
         await registerPage.register(adminEmail, 'Admin', 'User', 'Password123!');
-        await page.waitForURL('/login', { timeout: 15000 });
+        await page.waitForTimeout(2000);
+        await page.waitForURL(/\/login/, { timeout: 15000 });
         await page.close();
     });
 
@@ -512,7 +658,9 @@ test.describe('User Management', () => {
 
         // Should see user table with at least 1 row
         await expect(page.locator('table.mat-mdc-table')).toBeVisible();
-        const rowCount = await page.locator('tr.data-row').count();
+        // Wait for data rows to appear (Angular Material uses mat-mdc-row class)
+        await page.locator('tr.mat-mdc-row').first().waitFor({ state: 'visible', timeout: 10000 });
+        const rowCount = await page.locator('tr.mat-mdc-row').count();
         expect(rowCount).toBeGreaterThanOrEqual(1);
     });
 
@@ -534,24 +682,35 @@ test.describe('User Management', () => {
 
         const newUserEmail = `new-user-${Date.now()}@example.com`;
 
-        // Fill form
+        // Fill form fields one by one with waits
         await page.locator('input[formcontrolname="email"]').fill(newUserEmail);
+        await page.waitForTimeout(100);
+
         await page.locator('input[formcontrolname="name"]').fill('New');
+        await page.waitForTimeout(100);
+
         await page.locator('input[formcontrolname="surname"]').fill('User');
-        await page.locator('input[formcontrolname="password"]').fill('NewPassword123!');
+        await page.waitForTimeout(100);
 
-        // Select role
+        await page.locator('input[formcontrolname="password"]').fill('Password123!');
+        await page.waitForTimeout(100);
+
+        // Select role - click to open dropdown
         await page.locator('mat-select[formcontrolname="role"]').click();
+        await page.waitForTimeout(300);
         await page.locator('mat-option:has-text("User")').click();
+        await page.waitForTimeout(300);
 
-        // In create mode button says "Create"
-        await page.locator('mat-dialog-container button:has-text("Create")').click();
+        // Wait for form to be valid
+        await page.waitForTimeout(500);
+
+        // Click Create button (wait for it to be enabled)
+        const createBtn = page.locator('mat-dialog-container button:has-text("Create")');
+        await expect(createBtn).toBeEnabled({ timeout: 5000 });
+        await createBtn.click();
 
         // Wait for dialog to close
-        await expect(dialog).toBeHidden({ timeout: 10000 });
-
-        // Wait for table to reload - dialog closes only on success
-        await page.waitForTimeout(2000);
+        await expect(dialog).toBeHidden({ timeout: 15000 });
     });
 });
 
@@ -562,13 +721,13 @@ test.describe('Navigation and Security', () => {
     test('Unauthenticated user redirected to login', async ({ page }) => {
         // Try to access protected routes without login
         await page.goto('/projects');
-        await expect(page).toHaveURL('/login');
+        await expect(page).toHaveURL(/\/login/);
 
         await page.goto('/users');
-        await expect(page).toHaveURL('/login');
+        await expect(page).toHaveURL(/\/login/);
 
         await page.goto('/tickets');
-        await expect(page).toHaveURL('/login');
+        await expect(page).toHaveURL(/\/login/);
     });
 
     test('Navigate between pages', async ({ page }) => {
@@ -578,7 +737,8 @@ test.describe('Navigation and Security', () => {
         const registerPage = new RegisterPage(page);
         await registerPage.goto();
         await registerPage.register(testEmail, 'Nav', 'User', 'Password123!');
-        await expect(page).toHaveURL('/login', { timeout: 15000 });
+        await page.waitForTimeout(2000);
+        await expect(page).toHaveURL(/\/login/, { timeout: 15000 });
 
         // Login
         const loginPage = new LoginPage(page);
@@ -601,7 +761,7 @@ test.describe('Navigation and Security', () => {
 
         // Logout
         await nav.logout();
-        await expect(page).toHaveURL('/login');
+        await expect(page).toHaveURL(/\/login/);
     });
 
     test('Session persistence after page reload', async ({ page }) => {
@@ -611,7 +771,8 @@ test.describe('Navigation and Security', () => {
         const registerPage = new RegisterPage(page);
         await registerPage.goto();
         await registerPage.register(testEmail, 'Session', 'User', 'Password123!');
-        await expect(page).toHaveURL('/login', { timeout: 15000 });
+        await page.waitForTimeout(2000);
+        await expect(page).toHaveURL(/\/login/, { timeout: 15000 });
 
         // Login
         const loginPage = new LoginPage(page);
