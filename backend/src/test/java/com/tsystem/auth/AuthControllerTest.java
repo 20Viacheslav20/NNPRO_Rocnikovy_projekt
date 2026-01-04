@@ -6,6 +6,7 @@ import com.tsystem.exception.UnauthorizedException;
 import com.tsystem.model.dto.response.TokenResponse;
 import com.tsystem.service.AuthService;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -13,10 +14,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -31,73 +36,162 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
-    @Autowired MockMvc mockMvc;
-    @MockitoBean AuthService authService;
+    @Autowired
+    private MockMvc mockMvc;
 
-    // === Register Tests ===
-    @Test
-    @DisplayName("POST /api/auth/register - successful registration")
-    void register_Success() throws Exception {
-        when(authService.register(any())).thenReturn(new TokenResponse("jwt-token"));
+    @MockitoBean
+    private AuthService authService;
 
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"test@example.com\",\"name\":\"Test\",\"surname\":\"User\",\"password\":\"password123\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("jwt-token"));
+    @Nested
+    @DisplayName("POST /api/auth/register")
+    class RegisterTests {
+
+        @Test
+        @DisplayName("successful registration returns token")
+        void register_Success() throws Exception {
+            when(authService.register(any())).thenReturn(new TokenResponse("jwt-token"));
+
+            mockMvc.perform(post("/api/auth/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                        "email": "test@example.com",
+                                        "name": "Test",
+                                        "surname": "User",
+                                        "password": "password123"
+                                    }
+                                    """))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.token").value("jwt-token"));
+
+            verify(authService).register(any());
+        }
     }
 
-    // === Login Tests ===
-    @Test
-    @DisplayName("POST /api/auth/login - successful login")
-    void login_Success() throws Exception {
-        when(authService.authenticate(any())).thenReturn(new TokenResponse("jwt-token"));
+    @Nested
+    @DisplayName("POST /api/auth/login")
+    class LoginTests {
 
-        mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"login\":\"test@example.com\",\"password\":\"password123\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("jwt-token"));
+        @Test
+        @DisplayName("successful login returns token")
+        void login_Success() throws Exception {
+            when(authService.authenticate(any())).thenReturn(new TokenResponse("jwt-token"));
+
+            mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                        "login": "test@example.com",
+                                        "password": "password123"
+                                    }
+                                    """))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.token").value("jwt-token"));
+
+            verify(authService).authenticate(any());
+        }
     }
 
-    // === Request Password Reset Tests ===
-    @Test
-    @DisplayName("POST /api/auth/request-password-reset - successful request")
-    void requestPasswordReset_Success() throws Exception {
-        doNothing().when(authService).requestPasswordReset(any());
+    @Nested
+    @DisplayName("POST /api/auth/request-password-reset")
+    class RequestPasswordResetTests {
 
-        mockMvc.perform(post("/api/auth/request-password-reset")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"login\":\"test@example.com\"}"))
-                .andExpect(status().isNoContent());
+        @Test
+        @DisplayName("successful request returns 204")
+        void requestPasswordReset_Success() throws Exception {
+            doNothing().when(authService).requestPasswordReset(any());
+
+            mockMvc.perform(post("/api/auth/request-password-reset")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                        "login": "test@example.com"
+                                    }
+                                    """))
+                    .andExpect(status().isNoContent());
+
+            verify(authService).requestPasswordReset(any());
+        }
+
+        @Test
+        @DisplayName("request for non-existent user still returns 204 (no reveal)")
+        void requestPasswordReset_NonExistentUser_Returns204() throws Exception {
+            doNothing().when(authService).requestPasswordReset(any());
+
+            mockMvc.perform(post("/api/auth/request-password-reset")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                        "login": "nonexistent@example.com"
+                                    }
+                                    """))
+                    .andExpect(status().isNoContent());
+        }
     }
 
-    // === Reset Password Tests ===
-    @Test
-    @DisplayName("POST /api/auth/reset-password - successful reset")
-    void resetPassword_Success() throws Exception {
-        doNothing().when(authService).resetPassword(any());
+    @Nested
+    @DisplayName("POST /api/auth/reset-password")
+    class ResetPasswordTests {
 
-        mockMvc.perform(post("/api/auth/reset-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"code\":\"uuid.12345678\",\"newPassword\":\"newPassword123\"}"))
-                .andExpect(status().isNoContent());
+        @Test
+        @DisplayName("successful reset returns 204")
+        void resetPassword_Success() throws Exception {
+            doNothing().when(authService).resetPassword(any());
+
+            mockMvc.perform(post("/api/auth/reset-password")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                        "code": "uuid.12345678",
+                                        "newPassword": "newPassword123"
+                                    }
+                                    """))
+                    .andExpect(status().isNoContent());
+
+            verify(authService).resetPassword(any());
+        }
     }
 
-    // === Change Password Tests ===
-    // Note: changePassword requires @AuthenticationPrincipal and throws UnauthorizedException if null
-    // UnauthorizedException is not handled in ErrorHandling, so it gets wrapped in ServletException
-    @Test
-    @DisplayName("POST /api/auth/change-password - without authentication throws UnauthorizedException")
-    void changePassword_WithoutAuth_ThrowsUnauthorized() {
-        Exception thrown = org.junit.jupiter.api.Assertions.assertThrows(
-                jakarta.servlet.ServletException.class,
-                () -> mockMvc.perform(post("/api/auth/change-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"oldPassword\":\"oldPassword\",\"newPassword\":\"newPassword123\"}"))
-        );
+    @Nested
+    @DisplayName("POST /api/auth/change-password")
+    class ChangePasswordTests {
 
-        assert thrown.getCause() instanceof UnauthorizedException :
-                "Expected UnauthorizedException as cause but got " + thrown.getCause().getClass().getSimpleName();
+        @Test
+        @DisplayName("without authentication throws UnauthorizedException")
+        void changePassword_WithoutAuth_ThrowsUnauthorized() {
+            Exception thrown = assertThrows(
+                    jakarta.servlet.ServletException.class,
+                    () -> mockMvc.perform(post("/api/auth/change-password")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                        "oldPassword": "oldPassword",
+                                        "newPassword": "newPassword123"
+                                    }
+                                    """))
+            );
+
+            assertInstanceOf(UnauthorizedException.class, thrown.getCause(),
+                    "Expected UnauthorizedException as cause");
+        }
+
+        @Test
+        @DisplayName("with authentication returns 204")
+        @WithMockUser(username = "test@example.com")
+        void changePassword_WithAuth_Success() throws Exception {
+            doNothing().when(authService).changePassword(any(), eq("test@example.com"));
+
+            mockMvc.perform(post("/api/auth/change-password")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                        "oldPassword": "oldPassword",
+                                        "newPassword": "newPassword123"
+                                    }
+                                    """))
+                    .andExpect(status().isNoContent());
+
+            verify(authService).changePassword(any(), eq("test@example.com"));
+        }
     }
 }
