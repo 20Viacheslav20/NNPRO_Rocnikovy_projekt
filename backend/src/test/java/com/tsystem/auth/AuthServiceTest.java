@@ -59,6 +59,7 @@ class AuthServiceTest {
                 .surname("User")
                 .password("hashedPassword")
                 .role(SystemRole.USER)
+                .blocked(false)
                 .build();
     }
 
@@ -90,7 +91,8 @@ class AuthServiceTest {
 
             when(userRepository.existsByEmail(req.getEmail())).thenReturn(true);
 
-            assertThrows(IllegalArgumentException.class, () -> authService.register(req));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> authService.register(req));
+            assertEquals("User with same username or email already exists", ex.getMessage());
             verify(userRepository, never()).save(any());
         }
 
@@ -109,6 +111,24 @@ class AuthServiceTest {
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
             verify(userRepository).save(userCaptor.capture());
             assertEquals(SystemRole.ADMIN, userCaptor.getValue().getRole());
+        }
+
+        @Test
+        @DisplayName("Registration sets username equal to email")
+        void register_SetsUsernameAsEmail() {
+            RegisterRequest req = RegisterRequest.builder()
+                    .email("test@example.com").name("Test").surname("User").password("password").build();
+
+            when(userRepository.existsByEmail(any())).thenReturn(false);
+            when(passwordEncoder.encode(any())).thenReturn("hash");
+            when(jwtService.generateToken(any(User.class))).thenReturn("token");
+
+            authService.register(req);
+
+            ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+            verify(userRepository).save(userCaptor.capture());
+            assertEquals(req.getEmail(), userCaptor.getValue().getUsername());
+            assertEquals(req.getEmail(), userCaptor.getValue().getEmail());
         }
     }
 
@@ -152,7 +172,21 @@ class AuthServiceTest {
             when(userRepository.findByUsername("nonexistent@example.com")).thenReturn(Optional.empty());
             when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
 
-            assertThrows(IllegalArgumentException.class, () -> authService.authenticate(req));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> authService.authenticate(req));
+            assertEquals("Invalid credentials", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("Authentication of blocked user throws exception")
+        void authenticate_BlockedUser_ThrowsException() {
+            testUser.setBlocked(true);
+            LoginRequest req = new LoginRequest("test@example.com", "password123");
+
+            when(userRepository.findByUsername("test@example.com")).thenReturn(Optional.of(testUser));
+
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> authService.authenticate(req));
+            assertEquals("Invalid credentials", ex.getMessage());
+            verify(authenticationManager, never()).authenticate(any());
         }
     }
 
@@ -161,11 +195,32 @@ class AuthServiceTest {
     class RequestPasswordResetTests {
 
         @Test
-        @DisplayName("Request for password reset for existing user")
-        void requestPasswordReset_UserExists_CreatesToken() {
+        @DisplayName("Request for password reset for existing user by username")
+        void requestPasswordReset_UserExistsByUsername_CreatesToken() {
             RequestPasswordReset req = RequestPasswordReset.builder().login("test@example.com").build();
 
             when(userRepository.findByUsername("test@example.com")).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.encode(any())).thenReturn("hashedCode");
+
+            authService.requestPasswordReset(req);
+
+            ArgumentCaptor<PasswordResetToken> tokenCaptor = ArgumentCaptor.forClass(PasswordResetToken.class);
+            verify(passwordResetTokenRepository).save(tokenCaptor.capture());
+
+            PasswordResetToken savedToken = tokenCaptor.getValue();
+            assertEquals(testUser, savedToken.getUser());
+            assertNotNull(savedToken.getId());
+            assertNotNull(savedToken.getExpiresAt());
+            assertTrue(savedToken.getExpiresAt().isAfter(OffsetDateTime.now()));
+        }
+
+        @Test
+        @DisplayName("Request for password reset for existing user by email")
+        void requestPasswordReset_UserExistsByEmail_CreatesToken() {
+            RequestPasswordReset req = RequestPasswordReset.builder().login("test@example.com").build();
+
+            when(userRepository.findByUsername("test@example.com")).thenReturn(Optional.empty());
+            when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
             when(passwordEncoder.encode(any())).thenReturn("hashedCode");
 
             authService.requestPasswordReset(req);
@@ -191,7 +246,7 @@ class AuthServiceTest {
     class ResetPasswordTests {
 
         @Test
-        @DisplayName("Successful password request")
+        @DisplayName("Successful password reset")
         void resetPassword_Success() {
             UUID tokenId = UUID.randomUUID();
             String code = "12345678";
@@ -208,19 +263,35 @@ class AuthServiceTest {
 
             authService.resetPassword(req);
 
+            assertEquals("newHashedPassword", testUser.getPassword());
+            assertNotNull(testUser.getPasswordChangedAt());
             verify(userRepository).save(testUser);
             verify(passwordResetTokenRepository).delete(resetToken);
         }
 
         @Test
-        @DisplayName("Reset password with inbalid token format")
+        @DisplayName("Reset password with invalid token format throws exception")
         void resetPassword_InvalidTokenFormat_ThrowsException() {
             ResetPassword req = ResetPassword.builder().code("invalidformat").newPassword("newPassword").build();
-            assertThrows(IllegalArgumentException.class, () -> authService.resetPassword(req));
+
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> authService.resetPassword(req));
+            assertEquals("invalid reset token format", ex.getMessage());
         }
 
         @Test
-        @DisplayName("Reset password with expired token")
+        @DisplayName("Reset password with non-existent token throws exception")
+        void resetPassword_TokenNotFound_ThrowsException() {
+            UUID tokenId = UUID.randomUUID();
+            ResetPassword req = ResetPassword.builder().code(tokenId + ".12345678").newPassword("newPassword").build();
+
+            when(passwordResetTokenRepository.findById(tokenId)).thenReturn(Optional.empty());
+
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> authService.resetPassword(req));
+            assertEquals("invalid reset token", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("Reset password with expired token throws exception")
         void resetPassword_ExpiredToken_ThrowsException() {
             UUID tokenId = UUID.randomUUID();
             PasswordResetToken expiredToken = PasswordResetToken.builder()
@@ -231,7 +302,26 @@ class AuthServiceTest {
 
             when(passwordResetTokenRepository.findById(tokenId)).thenReturn(Optional.of(expiredToken));
 
-            assertThrows(IllegalStateException.class, () -> authService.resetPassword(req));
+            IllegalStateException ex = assertThrows(IllegalStateException.class, () -> authService.resetPassword(req));
+            assertEquals("reset token expired", ex.getMessage());
+            verify(passwordResetTokenRepository).delete(expiredToken);
+        }
+
+        @Test
+        @DisplayName("Reset password with invalid code throws exception")
+        void resetPassword_InvalidCode_ThrowsException() {
+            UUID tokenId = UUID.randomUUID();
+            PasswordResetToken resetToken = PasswordResetToken.builder()
+                    .id(tokenId).user(testUser).token("hashedCode")
+                    .expiresAt(OffsetDateTime.now().plusMinutes(5)).build();
+
+            ResetPassword req = ResetPassword.builder().code(tokenId + ".wrongcode").newPassword("newPassword").build();
+
+            when(passwordResetTokenRepository.findById(tokenId)).thenReturn(Optional.of(resetToken));
+            when(passwordEncoder.matches("wrongcode", "hashedCode")).thenReturn(false);
+
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> authService.resetPassword(req));
+            assertEquals("invalid reset code", ex.getMessage());
         }
     }
 
@@ -250,20 +340,36 @@ class AuthServiceTest {
 
             authService.changePassword(req, "test@example.com");
 
+            assertEquals("newHashedPassword", testUser.getPassword());
+            assertNotNull(testUser.getPasswordChangedAt());
             verify(userRepository).save(testUser);
             verify(passwordResetTokenRepository).deleteAllByUserId(userId);
         }
 
         @Test
-        @DisplayName("Changing of password with wrong old password")
+        @DisplayName("Change password with wrong old password throws exception")
         void changePassword_WrongOldPassword_ThrowsException() {
             ChangePassword req = ChangePassword.builder().oldPassword("wrongPassword").newPassword("newPassword").build();
 
             when(userRepository.findByUsername("test@example.com")).thenReturn(Optional.of(testUser));
             when(passwordEncoder.matches("wrongPassword", "hashedPassword")).thenReturn(false);
 
-            assertThrows(IllegalArgumentException.class, () -> authService.changePassword(req, "test@example.com"));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> authService.changePassword(req, "test@example.com"));
+            assertEquals("old password mismatch", ex.getMessage());
             verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Change password for non-existent user throws exception")
+        void changePassword_UserNotFound_ThrowsException() {
+            ChangePassword req = ChangePassword.builder().oldPassword("oldPassword").newPassword("newPassword").build();
+
+            when(userRepository.findByUsername("nonexistent@example.com")).thenReturn(Optional.empty());
+
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> authService.changePassword(req, "nonexistent@example.com"));
+            assertEquals("user not found", ex.getMessage());
         }
     }
 }
