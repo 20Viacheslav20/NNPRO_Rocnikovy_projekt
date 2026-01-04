@@ -6,8 +6,10 @@ import com.tsystem.model.user.SystemRole;
 import com.tsystem.model.user.User;
 import com.tsystem.repository.UserRepository;
 import com.tsystem.service.UserService;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,9 +30,14 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
-    @Mock UserRepository userRepository;
-    @Mock PasswordEncoder passwordEncoder;
-    @InjectMocks UserService userService;
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @InjectMocks
+    private UserService userService;
 
     private User testUser;
     private UUID userId;
@@ -37,117 +45,417 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         userId = UUID.randomUUID();
-        testUser = User.builder().id(userId).email("test@example.com").username("test@example.com")
-                .name("Test").surname("User").role(SystemRole.USER).password("hashedPassword").build();
+        testUser = User.builder()
+                .id(userId)
+                .email("test@example.com")
+                .username("test@example.com")
+                .name("Test")
+                .surname("User")
+                .role(SystemRole.USER)
+                .password("hashedPassword")
+                .build();
     }
 
-    @Test @DisplayName("findAll - returns all users")
-    void findAll_ReturnsUsers() {
-        when(userRepository.findAll()).thenReturn(Arrays.asList(testUser, User.builder().id(UUID.randomUUID()).build()));
-        assertEquals(2, userService.findAll().size());
+    @Nested
+    @DisplayName("findAll")
+    class FindAllTests {
+
+        @Test
+        @DisplayName("returns all users")
+        void returnsAllUsers() {
+            User anotherUser = User.builder().id(UUID.randomUUID()).build();
+            when(userRepository.findAll()).thenReturn(Arrays.asList(testUser, anotherUser));
+
+            List<User> result = userService.findAll();
+
+            assertEquals(2, result.size());
+            verify(userRepository).findAll();
+        }
+
+        @Test
+        @DisplayName("returns empty list when no users")
+        void returnsEmptyList() {
+            when(userRepository.findAll()).thenReturn(Collections.emptyList());
+
+            List<User> result = userService.findAll();
+
+            assertTrue(result.isEmpty());
+            verify(userRepository).findAll();
+        }
     }
 
-    @Test @DisplayName("findAll - empty list")
-    void findAll_Empty() {
-        when(userRepository.findAll()).thenReturn(Collections.emptyList());
-        assertTrue(userService.findAll().isEmpty());
+    @Nested
+    @DisplayName("findById")
+    class FindByIdTests {
+
+        @Test
+        @DisplayName("returns user when found")
+        void returnsUserWhenFound() {
+            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+
+            User result = userService.findById(userId);
+
+            assertEquals(testUser, result);
+            assertEquals(userId, result.getId());
+            verify(userRepository).findById(userId);
+        }
+
+        @Test
+        @DisplayName("throws NotFoundException when user not found")
+        void throwsNotFoundExceptionWhenNotFound() {
+            UUID randomId = UUID.randomUUID();
+            when(userRepository.findById(randomId)).thenReturn(Optional.empty());
+
+            NotFoundException exception = assertThrows(
+                    NotFoundException.class,
+                    () -> userService.findById(randomId)
+            );
+
+            assertEquals("User not found.", exception.getMessage());
+            verify(userRepository).findById(randomId);
+        }
     }
 
-    @Test @DisplayName("findById - successfuly found")
-    void findById_Success() {
-        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-        assertEquals(testUser, userService.findById(userId));
+    @Nested
+    @DisplayName("findByEmail")
+    class FindByEmailTests {
+
+        @Test
+        @DisplayName("returns user when found")
+        void returnsUserWhenFound() {
+            String email = "test@example.com";
+            when(userRepository.findByEmail(email)).thenReturn(Optional.of(testUser));
+
+            User result = userService.findByEmail(email);
+
+            assertEquals(testUser, result);
+            assertEquals(email, result.getEmail());
+            verify(userRepository).findByEmail(email);
+        }
+
+        @Test
+        @DisplayName("throws NotFoundException when user not found")
+        void throwsNotFoundExceptionWhenNotFound() {
+            String email = "nonexistent@example.com";
+            when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+            NotFoundException exception = assertThrows(
+                    NotFoundException.class,
+                    () -> userService.findByEmail(email)
+            );
+
+            assertEquals("User not found.", exception.getMessage());
+            verify(userRepository).findByEmail(email);
+        }
     }
 
-    @Test @DisplayName("findById - not found")
-    void findById_NotFound() {
-        when(userRepository.findById(any())).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> userService.findById(UUID.randomUUID()));
+    @Nested
+    @DisplayName("findByUsername")
+    class FindByUsernameTests {
+
+        @Test
+        @DisplayName("returns user when found")
+        void returnsUserWhenFound() {
+            String username = "test@example.com";
+            when(userRepository.findByUsername(username)).thenReturn(Optional.of(testUser));
+
+            User result = userService.findByUsername(username);
+
+            assertEquals(testUser, result);
+            assertEquals(username, result.getUsername());
+            verify(userRepository).findByUsername(username);
+        }
+
+        @Test
+        @DisplayName("throws NotFoundException when user not found")
+        void throwsNotFoundExceptionWhenNotFound() {
+            String username = "nonexistent";
+            when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+            NotFoundException exception = assertThrows(
+                    NotFoundException.class,
+                    () -> userService.findByUsername(username)
+            );
+
+            assertEquals("User not found.", exception.getMessage());
+            verify(userRepository).findByUsername(username);
+        }
     }
 
-    @Test @DisplayName("findByEmail - successfully found")
-    void findByEmail_Success() {
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
-        assertEquals(testUser, userService.findByEmail("test@example.com"));
+    @Nested
+    @DisplayName("create")
+    class CreateTests {
+
+        @Test
+        @DisplayName("creates user with USER role")
+        void createsUserWithUserRole() {
+            UserRequest request = UserRequest.builder()
+                    .email("new@test.com")
+                    .name("New")
+                    .surname("User")
+                    .password("password123")
+                    .role("USER")
+                    .build();
+
+            when(passwordEncoder.encode("password123")).thenReturn("hashedPassword");
+            when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            User result = userService.create(request);
+
+            assertEquals("new@test.com", result.getEmail());
+            assertEquals("new@test.com", result.getUsername());
+            assertEquals("New", result.getName());
+            assertEquals("User", result.getSurname());
+            assertEquals(SystemRole.USER, result.getRole());
+            assertEquals("hashedPassword", result.getPassword());
+
+            verify(passwordEncoder).encode("password123");
+            verify(userRepository).save(any(User.class));
+        }
+
+        @Test
+        @DisplayName("creates user with ADMIN role")
+        void createsUserWithAdminRole() {
+            UserRequest request = UserRequest.builder()
+                    .email("admin@test.com")
+                    .name("Admin")
+                    .surname("User")
+                    .password("adminPass")
+                    .role("ADMIN")
+                    .build();
+
+            when(passwordEncoder.encode("adminPass")).thenReturn("hashedAdminPass");
+            when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            User result = userService.create(request);
+
+            assertEquals(SystemRole.ADMIN, result.getRole());
+            verify(passwordEncoder).encode("adminPass");
+            verify(userRepository).save(any(User.class));
+        }
+
+        @Test
+        @DisplayName("sets username equal to email")
+        void setsUsernameEqualToEmail() {
+            UserRequest request = UserRequest.builder()
+                    .email("unique@test.com")
+                    .name("Test")
+                    .surname("User")
+                    .password("pass")
+                    .role("USER")
+                    .build();
+
+            when(passwordEncoder.encode(any())).thenReturn("hash");
+            when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            User result = userService.create(request);
+
+            assertEquals(result.getEmail(), result.getUsername());
+        }
     }
 
-    @Test @DisplayName("findByEmail - not found")
-    void findByEmail_NotFound() {
-        when(userRepository.findByEmail(any())).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> userService.findByEmail("x@y.com"));
+    @Nested
+    @DisplayName("update")
+    class UpdateTests {
+
+        @Test
+        @DisplayName("updates user without password change")
+        void updatesUserWithoutPasswordChange() {
+            UserRequest request = UserRequest.builder()
+                    .email("updated@test.com")
+                    .name("Updated")
+                    .surname("Name")
+                    .role("ADMIN")
+                    .build();
+
+            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+            when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            User result = userService.update(userId, request);
+
+            assertEquals("updated@test.com", result.getEmail());
+            assertEquals("updated@test.com", result.getUsername());
+            assertEquals("Updated", result.getName());
+            assertEquals("Name", result.getSurname());
+            assertEquals(SystemRole.ADMIN, result.getRole());
+            assertEquals("hashedPassword", result.getPassword()); // unchanged
+
+            verify(passwordEncoder, never()).encode(any());
+            verify(userRepository).save(any(User.class));
+        }
+
+        @Test
+        @DisplayName("updates user with new password")
+        void updatesUserWithNewPassword() {
+            UserRequest request = UserRequest.builder()
+                    .email("updated@test.com")
+                    .name("Updated")
+                    .surname("Name")
+                    .password("newPassword")
+                    .role("USER")
+                    .build();
+
+            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.encode("newPassword")).thenReturn("newHashedPassword");
+            when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            User result = userService.update(userId, request);
+
+            assertEquals("newHashedPassword", result.getPassword());
+            verify(passwordEncoder).encode("newPassword");
+        }
+
+        @Test
+        @DisplayName("does not update password when blank")
+        void doesNotUpdatePasswordWhenBlank() {
+            UserRequest request = UserRequest.builder()
+                    .email("updated@test.com")
+                    .name("Updated")
+                    .surname("Name")
+                    .password("   ") // blank password
+                    .role("USER")
+                    .build();
+
+            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+            when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            User result = userService.update(userId, request);
+
+            assertEquals("hashedPassword", result.getPassword()); // unchanged
+            verify(passwordEncoder, never()).encode(any());
+        }
+
+        @Test
+        @DisplayName("does not update password when empty string")
+        void doesNotUpdatePasswordWhenEmpty() {
+            UserRequest request = UserRequest.builder()
+                    .email("updated@test.com")
+                    .name("Updated")
+                    .surname("Name")
+                    .password("") // empty password
+                    .role("USER")
+                    .build();
+
+            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+            when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            User result = userService.update(userId, request);
+
+            assertEquals("hashedPassword", result.getPassword());
+            verify(passwordEncoder, never()).encode(any());
+        }
+
+        @Test
+        @DisplayName("throws NotFoundException when user not found")
+        void throwsNotFoundExceptionWhenNotFound() {
+            UUID randomId = UUID.randomUUID();
+            UserRequest request = UserRequest.builder()
+                    .email("x@y.com")
+                    .name("X")
+                    .surname("Y")
+                    .role("USER")
+                    .build();
+
+            when(userRepository.findById(randomId)).thenReturn(Optional.empty());
+
+            NotFoundException exception = assertThrows(
+                    NotFoundException.class,
+                    () -> userService.update(randomId, request)
+            );
+
+            assertEquals("User not found.", exception.getMessage());
+            verify(userRepository, never()).save(any());
+        }
     }
 
-    @Test @DisplayName("findByUsername - successfully found")
-    void findByUsername_Success() {
-        when(userRepository.findByUsername("test@example.com")).thenReturn(Optional.of(testUser));
-        assertEquals(testUser, userService.findByUsername("test@example.com"));
+    @Nested
+    @DisplayName("delete")
+    class DeleteTests {
+
+        @Test
+        @DisplayName("deletes user successfully")
+        void deletesUserSuccessfully() {
+            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+
+            userService.delete(userId);
+
+            verify(userRepository).findById(userId);
+            verify(userRepository).delete(testUser);
+        }
+
+        @Test
+        @DisplayName("throws NotFoundException when user not found")
+        void throwsNotFoundExceptionWhenNotFound() {
+            UUID randomId = UUID.randomUUID();
+            when(userRepository.findById(randomId)).thenReturn(Optional.empty());
+
+            NotFoundException exception = assertThrows(
+                    NotFoundException.class,
+                    () -> userService.delete(randomId)
+            );
+
+            assertEquals("User not found.", exception.getMessage());
+            verify(userRepository, never()).delete(any());
+        }
     }
 
-    @Test @DisplayName("findByUsername - not found")
-    void findByUsername_NotFound() {
-        when(userRepository.findByUsername(any())).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> userService.findByUsername("notfound"));
+    @Nested
+    @DisplayName("blockUser")
+    class BlockUserTests {
+
+        @Test
+        @DisplayName("blocks user successfully")
+        void blocksUserSuccessfully() {
+            when(userRepository.blockUser(userId)).thenReturn(1);
+
+            userService.blockUser(userId);
+
+            verify(userRepository).blockUser(userId);
+        }
+
+        @Test
+        @DisplayName("throws EntityNotFoundException when user not found")
+        void throwsEntityNotFoundExceptionWhenNotFound() {
+            UUID randomId = UUID.randomUUID();
+            when(userRepository.blockUser(randomId)).thenReturn(0);
+
+            EntityNotFoundException exception = assertThrows(
+                    EntityNotFoundException.class,
+                    () -> userService.blockUser(randomId)
+            );
+
+            assertEquals("User not found", exception.getMessage());
+            verify(userRepository).blockUser(randomId);
+        }
     }
 
-    @Test @DisplayName("create - successful creation")
-    void create_Success() {
-        UserRequest req = UserRequest.builder().email("new@test.com").name("New").surname("User").password("pass").role("USER").build();
-        when(passwordEncoder.encode("pass")).thenReturn("hash");
-        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+    @Nested
+    @DisplayName("unblockUser")
+    class UnblockUserTests {
 
-        User result = userService.create(req);
-        assertEquals("new@test.com", result.getEmail());
-        assertEquals(SystemRole.USER, result.getRole());
-    }
+        @Test
+        @DisplayName("unblocks user successfully")
+        void unblocksUserSuccessfully() {
+            when(userRepository.unblockUser(userId)).thenReturn(1);
 
-    @Test @DisplayName("create with ADMIN role")
-    void create_AsAdmin() {
-        UserRequest req = UserRequest.builder().email("admin@test.com").name("A").surname("B").password("p").role("ADMIN").build();
-        when(passwordEncoder.encode(any())).thenReturn("hash");
-        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+            userService.unblockUser(userId);
 
-        assertEquals(SystemRole.ADMIN, userService.create(req).getRole());
-    }
+            verify(userRepository).unblockUser(userId);
+        }
 
-    @Test @DisplayName("update without password change")
-    void update_WithoutPassword() {
-        UserRequest req = UserRequest.builder().email("upd@test.com").name("Upd").surname("N").role("ADMIN").build();
-        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        @Test
+        @DisplayName("throws EntityNotFoundException when user not found")
+        void throwsEntityNotFoundExceptionWhenNotFound() {
+            UUID randomId = UUID.randomUUID();
+            when(userRepository.unblockUser(randomId)).thenReturn(0);
 
-        User result = userService.update(userId, req);
-        assertEquals("upd@test.com", result.getEmail());
-        verify(passwordEncoder, never()).encode(any());
-    }
+            EntityNotFoundException exception = assertThrows(
+                    EntityNotFoundException.class,
+                    () -> userService.unblockUser(randomId)
+            );
 
-    @Test @DisplayName("update with new password")
-    void update_WithPassword() {
-        UserRequest req = UserRequest.builder().email("upd@test.com").name("U").surname("N").password("newPass").role("USER").build();
-        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.encode("newPass")).thenReturn("newHash");
-        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        User result = userService.update(userId, req);
-        assertEquals("newHash", result.getPassword());
-    }
-
-    @Test @DisplayName("update - not found")
-    void update_NotFound() {
-        when(userRepository.findById(any())).thenReturn(Optional.empty());
-        UserRequest req = UserRequest.builder().email("x@y.com").name("X").surname("Y").role("USER").build();
-        assertThrows(NotFoundException.class, () -> userService.update(UUID.randomUUID(), req));
-    }
-
-    @Test @DisplayName("delete - successful removal")
-    void delete_Success() {
-        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-        userService.delete(userId);
-        verify(userRepository).delete(testUser);
-    }
-
-    @Test @DisplayName("delete - not found")
-    void delete_NotFound() {
-        when(userRepository.findById(any())).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> userService.delete(UUID.randomUUID()));
+            assertEquals("User not found", exception.getMessage());
+            verify(userRepository).unblockUser(randomId);
+        }
     }
 }
